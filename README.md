@@ -26,14 +26,18 @@ A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platfo
 - **Comprehensive API Coverage**: Support for all major PowerTrack endpoints
 
 ## Installation
-
+Create a virtual environment:
 ```bash
-pip install powertrack-sdk
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-Or for development:
-
+Install the SDK:
 ```bash
+# From PyPI (when published)
+pip install powertrack_sdk
+
+# Or from source (current development version)
 git clone https://github.com/dsd-hamsa/powertrack-sdk.git
 cd powertrack-sdk
 pip install -e .
