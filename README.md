@@ -39,8 +39,6 @@ cd powertrack-sdk
 pip install -e .
 ```
 
-The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication setup.
-
 ## Quick Authentication Setup
 
 The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication:  
@@ -55,7 +53,7 @@ The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication
 
 2. **Get fetch data**: In Chrome DevTools → Network tab → right-click any PowerTrack API call → "Copy as fetch"  
 ![Authentication Instructions](readme-auth.png)
-3. **Replace content**: Paste your fetch call into the `mostRecentFetch.js` file  
+3. **Replace content**: Paste your fetch call into the `mostRecentFetch.js` file and save   
 
 4. **Done**: The SDK will automatically find and use it for authentication  
 
@@ -150,6 +148,14 @@ for site in sites:
 ```
 
 ## API Reference
+
+### Data Models
+
+Note: All models and exceptions can be imported directly from powertrack_sdk:
+
+```python
+from powertrack_sdk import SiteConfig, Hardware, AlertSummary, SiteList, etc.
+```
 
 ### PowerTrackClient
 
