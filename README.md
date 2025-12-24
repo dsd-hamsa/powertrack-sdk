@@ -135,6 +135,9 @@ The SDK supports multiple authentication methods. The easiest way is to use the 
 ```python
 from powertrack_sdk import PowerTrackClient, SiteList
 
+# First, create the site list (one time setup)
+# python examples/fetch_site_list.py --customer-id YOUR_CUSTOMER_ID
+
 # Load site list from file
 sites = SiteList.from_json_file('portfolio/SiteList.json')
 
