@@ -1,0 +1,10 @@
+include mostRecentFetch.js
+include README.md
+include LICENSE
+include readme-auth.png
+include pyproject.toml
+recursive-include powertrack_sdk *.py
+recursive-include tests *.py
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.egg-info
