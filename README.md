@@ -2,6 +2,21 @@
 
 A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platform API.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Authentication Setup](#quick-authentication-setup)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+- [Configuration](#configuration)
+- [Error Handling](#error-handling)
+- [Advanced Features](#advanced-features)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
 ## Features
 
 - **Easy Authentication**: Multiple authentication methods (environment variables, browser fetch parsing, cookie files)
