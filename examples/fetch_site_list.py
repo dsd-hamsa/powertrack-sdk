@@ -55,7 +55,7 @@ def fetch_site_list_sdk(customer_id: str) -> SiteList:
         sites = []
         for site_overview in portfolio.sites:
             site = Site(
-                key=site_overview.site_id,
+                key=site_overview.key,
                 name=site_overview.name
             )
             sites.append(site)
