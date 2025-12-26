@@ -44,7 +44,7 @@ A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platfo
 Create a virtual environment:
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\Activate.ps1
 ```
 
 Install the SDK:
