@@ -1,14 +1,16 @@
 # PowerTrack SDK
 
-A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platform API.
+A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platform API (as documented [here](https://github.com/dsd-hamsa/PowerTrack-API)).
 
 ## Table of Contents
 
+- [Disclaimer](#disclaimer)
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Authentication Setup](#quick-authentication-setup)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
+- [Data Models](#data-models)
 - [Configuration](#configuration)
 - [Error Handling](#error-handling)
 - [Advanced Features](#advanced-features)
@@ -16,6 +18,9 @@ A comprehensive Python SDK for interacting with the AlsoEnergy PowerTrack platfo
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
+
+## Disclaimer
+This SDK is user-created and is not endorsed or supported by AlsoEnergy or STEM. It is not intended for use by unqualified personnel. All write / edit actions taken by the user are at your own risk. While PowerTrack has some limited safeguards in place, this SDK mimics operations that can done in the browser with the goal of automating tedious data entry for site setup, standardization, or configuration. Thus, any typo in a script has the potential to affect every site in your portfolio. It is suggested to review the [examples](https://github.com/dsd-hamsa/powertrack-sdk/tree/main/examples), use the mock client, and use dry-run or limit flags for untested batch automations to confirm output. AlsoEnergy, STEM, and authors / contributors of this SDK are not liable for any damages caused by the user. **Use at your own risk, there may be dragons!**
 
 ## Features
 
@@ -60,7 +65,7 @@ pip install -e .
 
 ## Quick Authentication Setup
 
-The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication:  
+The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication.    
 
 1. **Find the file**: After installation, locate it in your Python environment:  
    ```python
@@ -170,8 +175,9 @@ for site in sites:
 ```
 
 ## API Reference
+This SDK was built using the API [documentation](https://github.com/dsd-hamsa/PowerTrack-API/) scraped directly from the PowerTrack web app. Use of an API key is not required for interacting with the SDK as it mimics browser / web app usage (with less overhead).  
 
-### Data Models
+## Data Models
 
 Note: All models and exceptions can be imported directly from powertrack_sdk:
 
