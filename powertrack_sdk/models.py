@@ -4,9 +4,9 @@ Data models for PowerTrack SDK
 Defines classes representing PowerTrack API data structures.
 """
 
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 @dataclass
@@ -153,7 +153,11 @@ class SiteData:
 class SiteList:
     """Represents a list of sites with metadata."""
 
-    def __init__(self, sites: List[Union[Site, Dict[str, Any]]], metadata: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        sites: List[Union[Site, Dict[str, Any]]],
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize site list.
 
@@ -672,7 +676,9 @@ class SiteDetailedInfo:
             return None
 
         try:
-            end_date = datetime.fromisoformat(self.monitoringContractEndDate.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(
+                self.monitoringContractEndDate.replace('Z', '+00:00')
+                )
             remaining = end_date - datetime.now(end_date.tzinfo)
             return max(0, remaining.days)
         except (ValueError, AttributeError):

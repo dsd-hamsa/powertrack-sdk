@@ -9,11 +9,11 @@ import argparse
 import json
 import sys
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 try:
     from examples._util import get_client
-except Exception:
+except ImportError:
     from _util import get_client
 
 
@@ -27,10 +27,22 @@ Examples:
   python3 examples/get_driver_list.py --category 1 --output drivers.json
         """
     )
-    parser.add_argument("--code", type=int, default=1, help="Device functionCode (default: 1 for inverters)")
-    parser.add_argument("--mock", action="store_true", help="Use mock client for testing")
-    parser.add_argument("--output", help="Output file (default: stdout)")
-    parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    parser.add_argument(
+        "--code", 
+        type=int, 
+        default=1, 
+        help="Device functionCode (default: 1 for inverters)")
+    parser.add_argument(
+        "--mock", 
+        action="store_true", 
+        help="Use mock client for testing")
+    parser.add_argument(
+        "--output", 
+        help="Output file (default: stdout)")
+    parser.add_argument(
+        "--verbose", 
+        action="store_true", 
+        help="Verbose output")
 
     args = parser.parse_args(argv)
 
@@ -41,7 +53,7 @@ Examples:
 
     try:
         result = client.get_driver_list(args.code)
-    except Exception as e:
+    except (ValueError, ConnectionError, TimeoutError, OSError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
