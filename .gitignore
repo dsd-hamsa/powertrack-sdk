@@ -147,5 +147,6 @@ example\ output
 update_site_config.py
 apply_alert_updates.py
 
-# This file
+# github
 .gitignore
+.github
