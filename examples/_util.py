@@ -35,20 +35,46 @@ class MockClient:
         ])
 
     # Site listing
-    def get_sites(self, site_list_file: Optional[str] = None) -> SiteList:
-        if site_list_file:
+    def get_sites(self, site_list_file: Optional[str] = None, customer_id: Optional[str] = None,
+                  limit: Optional[int] = None, filter_active: bool = False, filter_inactive: bool = False) -> SiteList:
+        # Get base site list
+        if customer_id:
+            # For mock, just return sample sites
+            site_list = self._sites
+        elif site_list_file:
             try:
-                return SiteList.from_json_file(site_list_file)
+                site_list = SiteList.from_json_file(site_list_file)
             except Exception:
                 # Fall back to built-in sample
-                return self._sites
+                site_list = self._sites
+        else:
+            site_list = self._sites
+
+        # Apply filters
+        filtered_sites = []
+        for site in site_list.sites:
+            # Mock site status - alternate between active/inactive for demo
+            is_active = hash(site.key) % 2 == 0
+
+            if filter_active and not is_active:
+                continue
+            if filter_inactive and is_active:
+                continue
+
+            filtered_sites.append(site)
+
+        # Apply limit
+        if limit:
+            filtered_sites = filtered_sites[:limit]
+
+        return SiteList(sites=filtered_sites)
         return self._sites
 
     # Site config
     def get_site_config(self, site_id: str) -> SiteConfig:
         site_id = site_id if site_id.startswith("S") else f"S{site_id}"
         return SiteConfig(
-            site_id=site_id,
+            siteId=site_id,
             name=f"Mock Config for {site_id}",
             timezone="UTC",
             latitude=12.34,
@@ -57,13 +83,13 @@ class MockClient:
             address="123 Mock St",
             city="Mockville",
             state="MK",
-            zip_code="00000",
+            zipCode="00000",
             country="Mockland",
-            install_date="2020-01-01",
-            ac_capacity_kw=100.0,
-            dc_capacity_kw=120.0,
-            module_count=400,
-            raw_data={"mock": True},
+            installDate="2020-01-01",
+            acCapacityKw=100.0,
+            dcCapacityKw=120.0,
+            moduleCount=400,
+            rawData={"mock": True},
         )
 
     # Hardware list / details
@@ -74,28 +100,33 @@ class MockClient:
             Hardware(
                 key="H12345",
                 name="Inverter 1",
-                function_code=1,  # Inverter
+                functionCode=1,  # Inverter
                 hid=12345,
-                capacity_kw=50.0,
-                enable_bool=True
+                capacityKw=50.0,
+                enableBool=True
             ),
             Hardware(
                 key="H67890",
                 name="Meter 1",
-                function_code=2,  # Production Meter
+                functionCode=2,  # Production Meter
                 hid=67890,
-                capacity_kw=None,
-                enable_bool=True
+                capacityKw=None,
+                enableBool=True
             )
         ]
 
     def get_hardware_details(self, hardware_key: str) -> Optional[HardwareDetails]:
         from powertrack_sdk.models import HardwareDetails, Hardware
         summary = Hardware(
+
             key=hardware_key,
+
             name=f"Mock {hardware_key}",
-            function_code=1,
+
+            functionCode=1,
+
             hid=int(hardware_key[1:]) if hardware_key.startswith('H') else 12345
+
         )
         return HardwareDetails(key=hardware_key, summary=summary, details={"mock": True, "config": "sample"})
 
@@ -104,19 +135,23 @@ class MockClient:
         from powertrack_sdk.models import HardwareDiagnostics
         return HardwareDiagnostics(
             key=hardware_id,
-            hardware_name=f"Mock {hardware_id}",
-            last_attempt="2023-01-01T12:00:00Z",
-            last_changed="2023-01-01T12:00:00Z",
-            last_communication=1640995200,
-            last_success="2023-01-01T12:00:00Z",
-            out_of_service=False,
-            out_of_service_note="",
-            out_of_service_until=None,
-            parent_key="S60308",
-            read_only=False,
-            time_zone="UTC",
-            unit_id=1,
-            register_sets=[{"name": "Basic", "registers": []}]
+            hardwareName="Mock Hardware",
+            lastAttempt="2023-01-01T00:00:00Z",
+            lastChanged="2023-01-01T00:00:00Z",
+            lastCommunication=1672531200000,  # 2023-01-01 in milliseconds
+            lastSuccess="2023-01-01T00:00:00Z",
+            outOfService=False,
+            outOfServiceNote="",
+            outOfServiceUntil=None,
+            parentKey="S12345",
+            readOnly=False,
+            timeZone="UTC",
+            unitId=1,
+            registerSets=[],
+            dataBits="",
+            baudRate="",
+            parity="",
+            stopBits="",
         )
 
     def get_site_hardware_production(self, site_id: str):
@@ -145,9 +180,10 @@ class MockClient:
         # Return a sample alert trigger for one hardware key
         return AlertTrigger(key=hardware_key, triggers=[{"name": "MockTrigger", "isActive": True}])
 
-    def get_alert_summary(self, customer_id: Optional[str] = None, site_id: Optional[str] = None):
-        # Return a small dict-like response formatted like AlertSummaryResponse.hardware_summaries
-        return type("_", (), {"hardware_summaries": {"H100": type("s", (), {"count": 1, "max_severity": 2})}})()
+    def get_alert_summary(self, customer_id: Optional[str] = None, siteId: Optional[str] = None):
+        # Return a mock AlertSummaryResponse
+        from powertrack_sdk.models import AlertSummary, AlertSummaryResponse
+        return AlertSummaryResponse(hardwareSummaries={"H100": AlertSummary(hardwareKey="H100", maxSeverity=2, count=1)})
 
     def get_portfolio_overview(self, customer_id: str):
         # Return a mock PortfolioMetrics
@@ -315,58 +351,58 @@ class MockClient:
         return SiteDetailedInfo(
             key=site_id,
             name=f"Mock {site_id}",
-            is_monitored=True,
-            cell_modem_contract_end_date="2025-12-31",
+            isMonitored=True,
+            cellModemContractEndDate="2025-12-31",
             address={"street": "123 Mock St", "city": "Mock City", "state": "MC", "zip": "00000"},
-            cell_modem_contract_start_date="2020-01-01",
-            energy_capacity_unit=1,
+            cellModemContractStartDate="2020-01-01",
+            energyCapacityUnit=1,
             longitude=-74.0060,
-            parent_key="C8458",
-            weather_mode=1,
-            monitoring_contract_is_manual=False,
-            cell_modem_contract_custom_banner=False,
-            monitoring_contract_warn_date=None,
-            working_status="active",
-            capacity_dc_unit=1,
+            parentKey="C8458",
+            weatherMode=1,
+            monitoringContractIsManual=False,
+            cellModemContractCustomBanner=False,
+            monitoringContractWarnDate=None,
+            workingStatus="active",
+            capacityDcUnit=1,
             elevation=10,
-            daily_production_estimate=48.0,
-            last_changed="2023-01-01T00:00:00Z",
-            monthly_production_estimate=1440.0,
-            rated_power_unit=1,
-            monitoring_contract_custom_banner=False,
-            monitoring_contract_status=1,
-            monitoring_contract_end_date="2025-12-31",
-            estimated_commissioning_date="2020-01-01",
-            cell_modem_contract_access_note="",
-            cell_modem_contract_terminate_date=None,
-            cell_modem_contract_is_manual=False,
-            customer_logo="",
-            capacity_ac=100,
-            custom_query_key="",
-            preferred_ws_for_estimated_insolation=1,
-            requires_pub_ip=False,
-            default_query=1,
-            monitoring_contract_will_not_renew=False,
-            capacity_ac_unit=1,
+            dailyProductionEstimate=48.0,
+            lastChanged="2023-01-01T00:00:00Z",
+            monthlyProductionEstimate=1440.0,
+            ratedPowerUnit=1,
+            monitoringContractCustomBanner=False,
+            monitoringContractStatus=1,
+            monitoringContractEndDate="2025-12-31",
+            estimatedCommissioningDate="2020-01-01",
+            cellModemContractAccessNote="",
+            cellModemContractTerminateDate=None,
+            cellModemContractIsManual=False,
+            customerLogo="",
+            capacityAc=100,
+            customQueryKey="",
+            preferredWsForEstimatedInsolation=1,
+            requiresPubIp=False,
+            defaultQuery=1,
+            monitoringContractWillNotRenew=False,
+            capacityAcUnit=1,
             status=1,
             latitude=40.7128,
-            rated_power=100,
-            advanced_site_configuration=False,
-            monitoring_contract_terminate_date=None,
-            actual_commissioning_date="2020-01-01",
-            estimated_losses={},
-            cell_modem_contract_warn_date=None,
-            monitoring_contract_access_note="",
-            valid_data_date="2023-01-01",
-            payment_status=1,
-            capacity_dc=120.0,
-            monitoring_contract_start_date="2020-01-01",
-            energy_capacity=100,
-            overview_chart1="chart1",
-            overview_chart2="chart2",
-            cell_modem_contract_will_not_renew=False,
-            site_type=1,
-            site_photos=None
+            ratedPower=100,
+            advancedSiteConfiguration=False,
+            monitoringContractTerminateDate=None,
+            actualCommissioningDate="2020-01-01",
+            estimatedLosses={},
+            cellModemContractWarnDate=None,
+            monitoringContractAccessNote="",
+            validDataDate="2023-01-01",
+            paymentStatus=1,
+            capacityDc=120.0,
+            monitoringContractStartDate="2020-01-01",
+            energyCapacity=100,
+            overviewChart1="chart1",
+            overviewChart2="chart2",
+            cellModemContractWillNotRenew=False,
+            siteType=1,
+            sitePhotos=None
         )
 
     def get_chart_definitions(self):
@@ -386,7 +422,7 @@ class MockClient:
             }
         ]
 
-    def get_chart_data(self, chart_type, site_id, start_date=None, end_date=None):
+    def get_chart_data(self, chart_type, site_id, start_date=None, end_date=None, bin_size=None):
         # Return mock ChartData
         from powertrack_sdk.models import ChartData, ChartSeries
         series = [
@@ -395,57 +431,151 @@ class MockClient:
                 key="prod",
                 dataXy=[(1640995200, 50.0), (1641081600, 48.0)],  # Sample data
                 color="#FF0000",
-                custom_unit="kWh",
-                data_max=50.0,
-                data_min=48.0,
+                customUnit="kWh",
+                dataMax=50.0,
+                dataMin=48.0,
                 diameter=2,
-                fit_exponent=1,
+                fitExponent=1,
                 header="Production",
-                line_color="#FF0000",
-                line_type=0,
-                line_width=2,
-                right_axis=False,
+                lineColor="#FF0000",
+                lineType=0,
+                lineWidth=2,
+                rightAxis=False,
                 units=0,
-                use_binned_data=False,
+                useBinnedData=False,
                 visible=True,
-                x_series_header="Time",
-                x_series_key="time",
-                x_series_name="Time",
-                x_units="timestamp",
-                y_axis_index=0,
-                y_max=50.0,
-                y_min=48.0,
-                alert_message_map=None
+                xSeriesHeader="Time",
+                xSeriesKey="time",
+                xSeriesName="Time",
+                xUnits="timestamp",
+                yAxisIndex=0,
+                yMax=50.0,
+                yMin=48.0,
+                alertMessageMap=None
             )
         ]
         return ChartData(
-            allow_small_bin_size=True,
-            bin_size=1440,
-            current_now_bin_index=0,
-            data_not_available=False,
-            durations=[],
+            allowSmallBinSize=True,
+            binSize=bin_size or 1440,
+            currentNowBinIndex=0,
+            dataNotAvailable=False,
+            durations=[{"key": "day", "name": "Day", "value": 1}],
             end=end_date or "2024-01-31T23:59:59Z",
-            error_string="",
-            hardware_keys=["H12345"],
-            has_alert_messages=False,
-            has_overridden_query=False,
-            is_category_chart=False,
-            is_summary_chart=False,
-            is_using_daylight_savings=False,
+            errorString="",
+            hardwareKeys=["H12345"],
+            hasAlertMessages=False,
+            hasOverriddenQuery=False,
+            isCategoryChart=False,
+            isSummaryChart=False,
+            isUsingDaylightSavings=False,
             key=f"chart_{chart_type}_{site_id}",
-            last_changed="2023-01-01T00:00:00Z",
-            last_data_datetime="2024-01-31T23:59:59Z",
-            named_results={"energy": 98.0},
-            render_type=0,
+            lastChanged="2023-01-01T00:00:00Z",
+            lastDataDatetime="2024-01-31T23:59:59Z",
+            namedResults={"energy": 98.0},
+            renderType=0,
             series=series,
+            summaryTable=[{"key": "total", "value": 100.0}],
             start=start_date or "2024-01-01T00:00:00Z"
         )
 
     # Modeling
     def get_modeling_data(self, site_id: str) -> Optional[ModelingData]:
-        return ModelingData(site_id=site_id, pv_config={}, inverters=[{"inverterKw": 50}], ts="ts", raw_data={})
+        from powertrack_sdk.models import ModelingData
+        return ModelingData(siteId=site_id, pvConfig={}, inverters=[{"inverterKw": 50}], ts="ts", rawData={})
 
-    # Comprehensive site data
+    def get_register_offsets(self, hardware_id: str) -> Dict[str, Any]:
+        # Return mock register offsets
+        return {
+            "key": hardware_id,
+            "lastChanged": "2023-01-01T00:00:00Z",
+            "registerOffsets": [
+                {
+                    "register": "40001",
+                    "offset": 0,
+                    "scale": 1.0,
+                    "description": "Voltage Phase A"
+                },
+                {
+                    "register": "40002",
+                    "offset": 100,
+                    "scale": 0.1,
+                    "description": "Current Phase A"
+                }
+            ]
+        }
+
+    def get_pv_model_curves(self, model_type: str = "efficiencycurvemodels") -> List[Dict[str, Any]]:
+        # Return mock PV model curves
+        return [
+            {"name": "Efficiency at 1000 W/m²", "value": 0.85},
+            {"name": "Efficiency at 800 W/m²", "value": 0.82},
+            {"name": "Efficiency at 600 W/m²", "value": 0.78},
+            {"name": "Efficiency at 400 W/m²", "value": 0.75},
+            {"name": "Efficiency at 200 W/m²", "value": 0.70}
+        ]
+
+    def get_pvsyst_modules(self, hardware_id: Optional[str] = None, site_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        # Return mock PVSyst modules (hardware/site-specific configurations)
+        return [
+            {"name": "Canadian Solar CS6P-250P", "value": "CS6P-250P"},
+            {"name": "LG Electronics LG300N1C-A5", "value": "LG300N1C-A5"},
+            {"name": "Sunrun SR-M250-BLK", "value": "SR-M250-BLK"},
+            {"name": "Trina Solar TSM-250PA05", "value": "TSM-250PA05"},
+            {"name": "Hanwha Q.CELLS Q.PEAK 250", "value": "Q.PEAK-250"}
+        ]
+
+    def get_driver_settings(self, hardware_id: str) -> Optional[Dict[str, Any]]:
+        # Return mock driver settings
+        return {
+            "key": hardware_id,
+            "lastChanged": "2023-01-01T00:00:00Z",
+            "driverSettings": [
+                {
+                    "name": "dev:KWHoffset",
+                    "value": "0",
+                    "type": 2
+                }
+            ]
+        }
+
+    def get_driver_settings_list(self, list_id: str) -> List[Dict[str, Any]]:
+        # Return mock driver settings list
+        return [
+            {
+                "id": list_id,
+                "name": f"Settings List {list_id}",
+                "settings": [
+                    {"name": "baud_rate", "value": 9600},
+                    {"name": "parity", "value": "none"}
+                ]
+            }
+        ]
+
+    def get_driver_list(self, code: int = 2) -> List[Dict[str, Any]]:
+        # Return mock driver list (subset from real data)
+        # Return different mock data based on function code
+        if code == 1:  # Inverters
+            return [
+                {"name": "ABB, PVS980-58-1818kVA-I", "value": 818, "isGolden": False, "isTest": False, "refGolden": None},
+                {"name": "SMA Sunny Tripower", "value": 1234, "isGolden": True, "isTest": False, "refGolden": None}
+            ]
+        elif code == 4:  # Grid Meters
+            return [
+                {"name": "AccuEnergy Acuvim II(R-D-5A) Primary Mode(SS)Standard", "value": 19601, "isGolden": True, "isTest": False, "refGolden": None},
+                {"name": "Schneider Electric PM5560", "value": 5678, "isGolden": False, "isTest": False, "refGolden": None}
+            ]
+        elif code == 5:  # Weather Stations
+            return [
+                {"name": "A8814 Acquisuite+ [Obvius DC = 73] Standard", "value": 881, "isGolden": True, "isTest": False, "refGolden": None},
+                {"name": "Campbell Scientific CR1000", "value": 9012, "isGolden": False, "isTest": False, "refGolden": None}
+            ]
+        else:  # Default (Production Meters)
+            return [
+                {"name": "AccuEnergy Acuvim II(R-D-5A) Primary Mode(SS)Standard", "value": 19601, "isGolden": True, "isTest": False, "refGolden": None},
+                {"name": "A8814 Acquisuite+ [Obvius DC = 73] Standard", "value": 881, "isGolden": True, "isTest": False, "refGolden": None},
+                {"name": "ABB, PVS980-58-1818kVA-I", "value": 818, "isGolden": False, "isTest": False, "refGolden": None}
+            ]
+
     def get_site_data(self, site_id: str, include_hardware: bool = True, include_alerts: bool = True, include_modeling: bool = True) -> SiteData:
         site = Site(key=site_id, name=f"Mock {site_id}")
         config = self.get_site_config(site_id)

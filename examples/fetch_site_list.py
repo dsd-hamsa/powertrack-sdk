@@ -14,6 +14,9 @@ Output:
     portfolio/SiteList.json - Complete site list with metadata
 """
 
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 import os
 import argparse
 import json

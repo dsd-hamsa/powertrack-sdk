@@ -4,6 +4,10 @@ Fetch alert summaries and detailed triggers for a customer or site.
 
 Saves aggregated JSON with summary and per-hardware details.
 """
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from __future__ import annotations
 
 import argparse
@@ -46,7 +50,7 @@ def main(argv: Optional[List[str]] = None):
     client = get_client(use_mock=args.mock)
 
     try:
-        summary = client.get_alert_summary(customer_id=args.customer_id, site_id=args.site_id)
+        summary = client.get_alert_summary(customer_id=args.customer_id, siteId=args.site_id)
     except Exception as e:
         logger.error(f"Failed to fetch alert summary: {e}")
         sys.exit(2)

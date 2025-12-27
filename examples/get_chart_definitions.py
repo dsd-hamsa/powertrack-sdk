@@ -8,9 +8,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
-
+"""
+The below allows for importing a mock client for testing purposes from the examples directory.
+In production, you would import your client from the actual SDK package.
+"""
 try:
     from examples._util import get_client
 except Exception:
@@ -41,7 +44,18 @@ Examples:
     try:
         result = client.get_chart_definitions()
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Client error: {e}", file=sys.stderr)
+        if not args.mock:
+            print("Chart definitions endpoint not available in current API. Use --mock for sample data.", file=sys.stderr)
+        else:
+            print("Mock client error", file=sys.stderr)
+        sys.exit(1)
+
+    if result is None or (isinstance(result, list) and len(result) == 0):
+        if args.mock:
+            print("No chart definitions available", file=sys.stderr)
+        else:
+            print("Chart definitions endpoint not available in current API. Use --mock for sample data.", file=sys.stderr)
         sys.exit(1)
 
     # Convert result to serializable dict
@@ -54,21 +68,13 @@ Examples:
             return {str(k): to_safe(v) for k, v in o.items()}
         if isinstance(o, (list, tuple, set)):
             return [to_safe(v) for v in o]
-        import types
-        if isinstance(o, types.MappingProxyType):
-            return to_safe(dict(o))
-        if hasattr(o, '__dict__'):
-            try:
-                return to_safe(o.__dict__)
-            except Exception:
-                return str(o)
         return str(o)
 
     output = {
         "method": "get_chart_definitions",
         "args": {},
         "result": to_safe(result),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
 
     json_output = json.dumps(output, indent=2, ensure_ascii=False, default=str)

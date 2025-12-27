@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Example script for PowerTrackClient.get_sites()
-Usage: python3 examples/get_sites.py [--site-list-file path] [--mock]
+Example script for PowerTrackClient.get_driver_list()
+Usage: python3 examples/get_driver_list.py [--category 1] [--mock]
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 try:
@@ -19,15 +19,15 @@ except Exception:
 
 def main(argv: Optional[list[str]] = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Example: Get site list",
+        description="Example: Get list of available drivers by functionCode",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 examples/get_sites.py --mock
-  python3 examples/get_sites.py --site-list-file portfolio/SiteList.json --output sites.json
+  python3 examples/get_driver_list.py --mock
+  python3 examples/get_driver_list.py --category 1 --output drivers.json
         """
     )
-    parser.add_argument("--site-list-file", help="Path to SiteList.json file")
+    parser.add_argument("--code", type=int, default=1, help="Device functionCode (default: 1 for inverters)")
     parser.add_argument("--mock", action="store_true", help="Use mock client for testing")
     parser.add_argument("--output", help="Output file (default: stdout)")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
@@ -37,10 +37,10 @@ Examples:
     client = get_client(use_mock=args.mock)
 
     if args.verbose:
-        print(f"Calling get_sites(site_list_file='{args.site_list_file}')", file=sys.stderr)
+        print(f"Calling get_driver_list(code={args.code})", file=sys.stderr)
 
     try:
-        result = client.get_sites(args.site_list_file)
+        result = client.get_driver_list(args.code)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -55,21 +55,15 @@ Examples:
             return {str(k): to_safe(v) for k, v in o.items()}
         if isinstance(o, (list, tuple, set)):
             return [to_safe(v) for v in o]
-        import types
-        if isinstance(o, types.MappingProxyType):
-            return to_safe(dict(o))
-        if hasattr(o, '__dict__'):
-            try:
-                return to_safe(o.__dict__)
-            except Exception:
-                return str(o)
         return str(o)
 
     output = {
-        "method": "get_sites",
-        "args": {"site_list_file": args.site_list_file},
+        "method": "get_driver_list",
+        "args": {
+            "functionCode": args.code
+        },
         "result": to_safe(result),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
 
     json_output = json.dumps(output, indent=2, ensure_ascii=False, default=str)

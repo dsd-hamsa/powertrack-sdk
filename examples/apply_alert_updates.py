@@ -3,6 +3,10 @@
 Apply alert trigger updates from a JSON file. Dry-run by default; use --apply to perform writes.
 Expected update file format: list of {"hardware_key": "H123", "action": "update"|"add"|"delete", "payload": {...}}
 """
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from __future__ import annotations
 
 import argparse

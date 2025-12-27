@@ -4,6 +4,10 @@ Fetch comprehensive site data for all sites in a SiteList using the SDK.
 
 Outputs one JSON file per site under the output directory.
 """
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from __future__ import annotations
 
 import argparse

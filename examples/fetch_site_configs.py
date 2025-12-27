@@ -2,6 +2,10 @@
 """
 Fetch site configuration(s) and save per-site JSON files.
 """
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from __future__ import annotations
 
 import argparse

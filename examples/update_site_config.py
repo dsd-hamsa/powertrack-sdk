@@ -3,6 +3,10 @@
 Read an update payload (JSON) and optionally apply it to a site config via the SDK.
 Defaults to dry-run. Backups are saved before applying when --apply is used.
 """
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from __future__ import annotations
 
 import argparse

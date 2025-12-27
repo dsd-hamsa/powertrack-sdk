@@ -10,6 +10,9 @@ Usage:
     python examples/validate_installation.py
 """
 
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
+
 from powertrack_sdk import __version__, utils, models
 
 
@@ -21,10 +24,10 @@ def smoke_tests():
     assert utils.parse_site_id('60001') == 'S60001'
 
     # models checks
-    hw = models.Hardware(key='H1', name='Device', function_code=1)
+    hw = models.Hardware(key='H1', name='Device', functionCode=1)
     assert 'Inverter' in hw.type_name
 
-    md = models.ModelingData(site_id='S1', inverters=[{'inverterKw': 1.0}, {'inverterKw': 2.0}])
+    md = models.ModelingData(siteId='S1', inverters=[{'inverterKw': 1.0}, {'inverterKw': 2.0}])
     assert md.total_capacity_kw == 3.0
 
     sl = models.SiteList([{'key': 'S10000', 'name': 'A'}])

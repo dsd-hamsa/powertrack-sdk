@@ -8,8 +8,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
 
 try:
     from examples._util import get_client
@@ -42,10 +45,10 @@ Examples:
     client = get_client(use_mock=args.mock)
 
     if args.verbose:
-        print(f"Calling get_alert_summary(customer_id='{args.customer_id}', site_id='{args.site_id}')", file=sys.stderr)
+        print(f"Calling get_alert_summary(customer_id='{args.customer_id}', siteId='{args.site_id}')", file=sys.stderr)
 
     try:
-        result = client.get_alert_summary(customer_id=args.customer_id, site_id=args.site_id)
+        result = client.get_alert_summary(customer_id=args.customer_id, siteId=args.site_id)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -72,9 +75,9 @@ Examples:
 
     output = {
         "method": "get_alert_summary",
-        "args": {"customer_id": args.customer_id, "site_id": args.site_id},
+        "args": {"customer_id": args.customer_id, "siteId": args.site_id},
         "result": to_safe(result),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
 
     json_output = json.dumps(output, indent=2, ensure_ascii=False, default=str)

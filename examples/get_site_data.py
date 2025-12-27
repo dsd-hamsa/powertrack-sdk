@@ -8,8 +8,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
+
+# The below allows for importing a mock client for testing purposes from the examples directory.
+# In production, you would import your client from the actual SDK package.
 
 try:
     from examples._util import get_client
@@ -80,7 +83,7 @@ Examples:
             "include_modeling": args.include_modeling
         },
         "result": to_safe(result),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
 
     json_output = json.dumps(output, indent=2, ensure_ascii=False, default=str)
