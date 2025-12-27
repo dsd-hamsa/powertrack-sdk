@@ -55,7 +55,15 @@ def test_update_site_config_dry_run(tmp_path):
     upd = tmp_path / "upd.json"
     upd.write_text(json.dumps({"someField": 2}))
     # dry-run should not create backups
-    res = update_site_config.main(["--site-id", "S10001", "--update-file", str(upd), "--mock"]) 
+    res = update_site_config.main(["--site-id", "S10001", "--update-file", str(upd), "--mock"])
     assert isinstance(res, dict)
     assert res.get("applied") is False
+
+
+def test_get_chart_data_mock():
+    import get_chart_data
+    # Test with mock
+    result = get_chart_data.main(["--chart-type", "255", "--site-id", "S70726", "--mock"])
+    # Should return 0 (success)
+    assert result is None  # main returns None on success
 

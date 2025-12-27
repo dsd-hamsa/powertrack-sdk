@@ -21,9 +21,9 @@ def test_basic_models():
         hardware = Hardware(
             key="H456",
             name="Test Inverter",
-            function_code=5,
+            functionCode=5,
             hid=456,
-            enable_bool=True
+            enableBool=True
         )
         print("✓ Hardware model works")
 
@@ -34,28 +34,36 @@ def test_basic_models():
 
         # Test AlertSummary
         alert_summary = AlertSummary(
-            hardware_key="H123",
-            max_severity=2,
+            hardwareKey="H123",
+            maxSeverity=2,
             count=5
         )
         print("✓ AlertSummary model works")
 
         # Test ReportingCapabilities
         reporting = ReportingCapabilities(
-            can_edit_auto_report=True,
-            can_add_email_report=False,
-            can_add_summary_report=True,
-            can_add_auto_report=False,
-            can_add_user_report=True,
+            canEditAutoReport=True,
+            canAddEmailReport=False,
+            canAddSummaryReport=True,
+            canAddAutoReport=False,
+            canAddUserReport=True,
             views=[]
         )
         print("✓ ReportingCapabilities model works")
 
-        return True
+        assert site.key == "S123"
+        assert hardware.key == "H456"
+        assert hardware.functionCode == 5
+        assert hardware.enableBool == True
+        assert len(site_list.sites) == 1
+        assert alert_summary.hardwareKey == "H123"
+        assert alert_summary.maxSeverity == 2
+        assert reporting.canEditAutoReport == True
 
     except Exception as e:
         print(f"✗ Basic model test failed: {e}")
-        return False
+        assert False
+
 
 def test_client_method_signatures():
     """Test that all client methods have correct signatures."""
@@ -66,17 +74,17 @@ def test_client_method_signatures():
         # Expected method signatures
         expected_signatures = {
             'get_portfolio_overview': ['self', 'customer_id'],
-            'get_site_overview': ['self', 'site_id'],
-            'get_site_detailed_info': ['self', 'site_id'],
-            'get_chart_data': ['self', 'chart_type', 'site_id', 'start_date', 'end_date'],
-            'get_alert_summary': ['self', 'customer_id', 'site_id'],
+            'get_site_overview': ['self', 'siteId'],
+            'get_site_detailed_info': ['self', 'siteId'],
+            'get_chart_data': ['self', 'chart_type', 'siteId', 'start_date', 'end_date', 'bin_size'],
+            'get_alert_summary': ['self', 'customer_id', 'siteId'],
             'get_hardware_diagnostics': ['self', 'hardware_id'],
             'get_reporting_capabilities': ['self'],
             'get_pv_model_curves': ['self', 'model_type'],
-            'get_pvsyst_modules': ['self', 'hardware_id', 'site_id'],
+            'get_pvsyst_modules': ['self', 'hardware_id', 'siteId'],
             'get_driver_settings': ['self', 'hardware_id'],
-            'get_site_links': ['self', 'site_id'],
-            'get_site_shares': ['self', 'site_id']
+            'get_site_links': ['self', 'siteId'],
+            'get_site_shares': ['self', 'siteId']
         }
 
         for method_name, expected_params in expected_signatures.items():
@@ -87,24 +95,31 @@ def test_client_method_signatures():
                     print(f"✓ {method_name} signature correct")
                 else:
                     print(f"✗ {method_name} signature mismatch: expected {expected_params}, got {actual_params}")
-                    return False
+                    assert False
             else:
                 print(f"✗ Missing method: {method_name}")
-                return False
-
-        return True
+                assert False
 
     except Exception as e:
         print(f"✗ Client signature test failed: {e}")
-        return False
+        assert False
+
 
 if __name__ == "__main__":
     print("Running PowerTrack SDK Integration Tests...")
     print("\n=== Model Integration Tests ===")
-    models_ok = test_basic_models()
+    try:
+        test_basic_models()
+        models_ok = True
+    except AssertionError:
+        models_ok = False
 
     print("\n=== Client Method Signature Tests ===")
-    signatures_ok = test_client_method_signatures()
+    try:
+        test_client_method_signatures()
+        signatures_ok = True
+    except AssertionError:
+        signatures_ok = False
 
     if models_ok and signatures_ok:
         print("\n🎉 All integration tests passed!")
