@@ -55,7 +55,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\Activate.ps1
 Install the SDK:
 ```bash
 # From PyPI (when published)
-pip install powertrack_sdk
+pip install powertrack-sdk
 
 # Or from source (current development version)
 git clone https://github.com/dsd-hamsa/powertrack-sdk.git
