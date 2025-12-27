@@ -1,0 +1,6 @@
+{
+  "azimuth": 180,
+  "tilt": 30,
+  "derate": 0.95,
+  "pvSystModuleId": 12345
+}

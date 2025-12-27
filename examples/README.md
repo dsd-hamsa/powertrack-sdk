@@ -41,6 +41,12 @@
 - Apply config update:
   - `python examples/update_site_config.py --site-id S12345 --update-file edits.json --apply`
 
+- Dry-run hardware modeling update:
+  - `python examples/update_inverter_modeling.py --hardware-id H12345 --mock`
+
+- Apply hardware modeling update:
+  - `python examples/update_inverter_modeling.py --hardware-id H12345 --update-file modeling_updates.json --apply`
+
 - Fetch alert summaries (mock):
   - `python examples/fetch_all_site_alerts.py --customer-id C12345 --mock`
 
@@ -79,6 +85,7 @@ This directory contains individual CLI scripts for each SDK method, allowing you
 
 ### Modeling & Configuration
 - `python3 examples/get_modeling_data.py --site-id S12345 --mock`
+- `python3 examples/update_inverter_modeling.py --hardware-id H12345 --mock` (update hardware modeling)
 - `python3 examples/get_pv_model_curves.py --model-type incidenceanglemodels`
 - `python3 examples/get_pvsyst_modules.py --hardware-id H327293`
 - `python3 examples/get_driver_settings.py --hardware-id H327293`
