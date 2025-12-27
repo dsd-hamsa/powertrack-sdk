@@ -28,7 +28,7 @@ This SDK is user-created and is not endorsed or supported by AlsoEnergy or STEM.
 - **Full Read/Write Access**: Complete CRUD operations for configuration management
 - **Portfolio Overview**: Real-time portfolio metrics and site performance data
 - **Chart & Visualization**: Time-series data and chart definitions for analytics
-- **Site Intelligence**: Detailed site information including contracts and configurations
+- **Site Intelligence**: Detailed site information including contract dates and configurations
 - **Hardware Diagnostics**: Register-level hardware diagnostics and status information
 - **Alert Analytics**: Comprehensive alert summaries with severity tracking
 - **Configuration Management**: Update site, hardware, modeling, and alert configurations
@@ -38,12 +38,12 @@ This SDK is user-created and is not endorsed or supported by AlsoEnergy or STEM.
 - **Alert Management**: Full CRUD operations for alert triggers and settings
 - **Modeling Updates**: Update PV configurations, inverter models, and bifacial settings
 - **Reporting Capabilities**: User permissions and report configuration access
-- **Site Management**: Fetch site configurations, lists, and sharing information
+- **Site Management**: Fetch or edit site configurations, lists, and sharing information
 - **Hardware Data**: Retrieve hardware lists, configurations, and details
 - **Audit & Preferences**: User preferences, audit logs, and system access tracking
-- **Robust Error Handling**: Automatic retries, fallback APIs, and comprehensive error reporting
+- **Robust Error Handling**: Automatic retries and comprehensive error reporting
 - **Type Safety**: Full type hints and data models
-- **Comprehensive API Coverage**: Support for all major PowerTrack endpoints
+- **Comprehensive API Coverage**: Support for all major PowerTrack webapp endpoints
 
 ## Installation
 Create a virtual environment:
@@ -75,7 +75,7 @@ The SDK includes a placeholder `mostRecentFetch.js` file for easy authentication
    print(fetch_file)  # Shows the path to edit
    ```
 
-2. **Get fetch data**: In Chrome DevTools → Network tab → right-click any PowerTrack API call → "Copy as fetch"  
+2. **Get fetch data**: In browser DevTools (`F12`) → Network tab → right-click any PowerTrack (*C#### / S##### / H######*) API call → "Copy as fetch (Node.js)"    
 ![Authentication Instructions](readme-auth.png)
 3. **Replace content**: Paste your fetch call into the `mostRecentFetch.js` file and save   
 
@@ -92,16 +92,16 @@ from powertrack_sdk import PowerTrackClient
 client = PowerTrackClient()
 
 # Get site configuration
-site_config = client.get_site_config('S60308')
+site_config = client.get_site_config('S12345')
 print(f"Site: {site_config.name}, Capacity: {site_config.ac_capacity_kw} kW")
 
 # Get hardware list
-hardware = client.get_hardware_list('S60308')
+hardware = client.get_hardware_list('S12345')
 for hw in hardware:
     print(f"{hw.name}: {hw.type_name}")
 
 # Get comprehensive site data
-site_data = client.get_site_data('S60308')
+site_data = client.get_site_data('S12345')
 print(f"Hardware count: {site_data.hardware_count}")
 print(f"Active alerts: {site_data.active_alerts_count}")
 ```
@@ -110,12 +110,12 @@ print(f"Active alerts: {site_data.active_alerts_count}")
 
 ```python
 # Get real-time portfolio overview
-portfolio = client.get_portfolio_overview('C8458')
+portfolio = client.get_portfolio_overview('C1234')
 for site in portfolio.sites:
     print(f"{site.name}: {site.availability}% availability, {site.power} kW")
 
 # Get chart data for visualization
-chart_data = client.get_chart_data(chart_type=1, site_id='S60308',
+chart_data = client.get_chart_data(chart_type=1, site_id='S12345',
                                   start_date='2024-01-01T00:00:00Z',
                                   end_date='2024-01-31T23:59:59Z')
 for series in chart_data.series:
@@ -127,7 +127,7 @@ print(f"Temperature: {diagnostics.temperature}°C")
 print(f"Status: {diagnostics.overall_status}")
 
 # Get alert summary
-alerts = client.get_alert_summary(customer_id='C8458')
+alerts = client.get_alert_summary(customer_id='C1234')
 for hw_key, summary in alerts.hardware_summaries.items():
     print(f"{hw_key}: {summary.count} alerts (max severity: {summary.max_severity})")
 ```
@@ -136,9 +136,9 @@ for hw_key, summary in alerts.hardware_summaries.items():
 
 The SDK supports multiple authentication methods. The easiest way is to use the included `mostRecentFetch.js` file:
 
-1. **Environment Variables** (recommended):
+1. **Environment Variables**:
    ```bash
-   export COOKIE="your_cookie_string"
+   export COOKIE="your_cookie_string" # Usually cut off by most terminals. May need to import from text file.
    export AE_S="your_aes_value"
    export AE_V="086665"  # Optional, defaults to 086665
    export BASE_URL="https://apps.alsoenergy.com"  # Optional
@@ -155,6 +155,9 @@ The SDK supports multiple authentication methods. The easiest way is to use the 
    - SDK will use it as fallback
 
 ### Advanced Usage
+
+For most portfolio-wide operations, you'll need your Customer ID, which can be found in the URL of your homepage while logged into PowerTrack.  
+![Customer ID](readme-customer-id.png)
 
 ```python
 from powertrack_sdk import PowerTrackClient, SiteList
@@ -306,7 +309,7 @@ from powertrack_sdk import PowerTrackClient, AuthenticationError, APIError
 
 try:
     client = PowerTrackClient()
-    data = client.get_site_config('S60308')
+    data = client.get_site_config('S12345')
 except AuthenticationError as e:
     print("Authentication failed:", e)
 except APIError as e:
@@ -334,7 +337,7 @@ client = PowerTrackClient(auth_manager=auth)
 
 ```python
 # Process multiple sites with error handling
-sites = ['S60308', 'S60309', 'S60310']
+sites = ['S12345', 'S60309', 'S60310']
 results = {}
 
 for site_id in sites:
@@ -351,22 +354,24 @@ for site_id in sites:
 ```python
 # Automatic session cleanup
 with PowerTrackClient() as client:
-    data = client.get_site_config('S60308')
+    data = client.get_site_config('S12345')
     # Session automatically closed
 ```
 
 ### Configuration Management
 
+The PowerTrack API requires that all PUT request payloads contain the full json object. The best approach for handling this is to pair a GET request with a PUT, so the GET response can be modified in memory before being submitted as the payload.   
+
+The PowerTrack API has different endpoints for GET and PUT requests. All PUTs lack an identifier (Site / Hardware / Alert) in the endpoint and thus require a Referer header.
 ```python
 # Update site configuration
 site_config = {
-    "name": "Updated Site Name",
     "latitude": 40.7128,
     "longitude": -74.0060,
     "acCapacityKw": 500.0,
     "dcCapacityKw": 550.0
 }
-success = client.update_site_config('S60308', site_config)
+success = client.update_site_config('S12345', site_config)
 
 # Update hardware configuration
 hardware_config = {
@@ -381,7 +386,7 @@ bulk_hardware = [
     {"hid": 123, "name": "Inverter 1", "capacityKw": 250.0},
     {"hid": 124, "name": "Inverter 2", "capacityKw": 250.0}
 ]
-success = client.bulk_update_hardware('S60308', bulk_hardware)
+success = client.bulk_update_hardware('S12345', bulk_hardware)
 ```
 
 ### Alert Management
@@ -428,7 +433,7 @@ modeling_config = {
         ]
     }
 }
-success = client.update_modeling_data('S60308', modeling_config)
+success = client.update_modeling_data('S12345', modeling_config)
 
 # Update inverter model
 inverter_model = {
@@ -456,7 +461,7 @@ report_config = {
     "type": "performance",
     "schedule": "monthly",
     "recipients": ["admin@company.com"],
-    "sites": ["S60308", "S60309"]
+    "sites": ["S12345", "S60309"]
 }
 success = client.create_report_config(report_config)
 
@@ -468,7 +473,7 @@ success = client.start_report("REPORT123", {
 
 # Upload PAN data
 pan_data = {
-    "siteId": "S60308",
+    "siteId": "S12345",
     "performanceData": {...},
     "timestamp": "2024-01-01T00:00:00Z"
 }
@@ -479,7 +484,7 @@ success = client.upload_pan_data(pan_data)
 
 ```python
 # Analyze entire portfolio performance
-portfolio = client.get_portfolio_overview('C8458')
+portfolio = client.get_portfolio_overview('C1234')
 
 # Find underperforming sites
 underperforming = [site for site in portfolio.sites if site.availability < 95.0]
@@ -516,7 +521,7 @@ print(f"Found {len(health_issues)} hardware health issues")
 
 ```python
 # Get comprehensive alert overview
-alert_summary = client.get_alert_summary(customer_id='C8458')
+alert_summary = client.get_alert_summary(customer_id='C1234')
 
 # Analyze alert patterns
 high_severity_sites = []
@@ -568,4 +573,3 @@ MIT License - see LICENSE file for details.
 
 For issues and questions:
 - GitHub Issues: https://github.com/dsd-hamsa/powertrack-sdk/issues
-- Documentation: https://powertrack-sdk.readthedocs.io/
