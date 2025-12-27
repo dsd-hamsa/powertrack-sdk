@@ -96,13 +96,18 @@ class PowerTrackClient:
 
     def _safe_json(self, response: requests.Response):
         """Safely parse JSON from a response."""
-        content_type = (response.headers.get("Content-Type") or "").lower()
-        if "json" in content_type:
-            try:
-                return response.json()
-            except Exception:
-                return None
-        return None
+        try:
+            return response.json()
+        except Exception:
+            # Try to parse even if content-type is not json
+            text = response.text.strip()
+            if text:
+                try:
+                    import json
+                    return json.loads(text)
+                except Exception:
+                    pass
+            return None
 
     def _safe_text(self, response: requests.Response, limit: int = 500) -> str:
         """Safely get response text snippet."""
@@ -180,11 +185,15 @@ class PowerTrackClient:
                 payload = self._safe_json(resp)
                 text_snip = self._safe_text(resp)
 
+                # Include response body in error for debugging
+                body_preview = resp.text[:500] if resp.text else ""
+
                 raise APIError(
                     f"HTTP {resp.status_code} error. "
                     f"Content-Type={resp.headers.get('Content-Type')}. "
                     f"URL={resp.url}. "
-                    f"Body_snip={text_snip!r}",
+                    f"Body_snip={text_snip!r}. "
+                    f"Body_preview={body_preview!r}",
                     resp.status_code,
                     payload,
                 )
@@ -251,26 +260,26 @@ class PowerTrackClient:
 
     # ===== SITE METHODS =====
 
-    def get_site_config(self, site_id: str) -> Optional[SiteConfig]:
+    def get_site_config(self, siteId: str) -> Optional[SiteConfig]:
         """
         Get site configuration data.
 
         Args:
-            site_id: Site ID (e.g., 'S60308')
+            siteId: Site ID (e.g., 'S60308')
 
         Returns:
             SiteConfig object or None if not found
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
-        referer = f"{self.base_url}/powertrack/{site_id}/administration/config"
-        data = self.get_json(f"/api/edit/site/{site_id}", referer=referer)
+        referer = f"{self.base_url}/powertrack/{siteId}/administration/config"
+        data = self.get_json(f"/api/edit/site/{siteId}", referer=referer)
 
         if not data:
             return None
 
         return SiteConfig(
-            site_id=site_id,
+            siteId=siteId,
             name=safe_get(data, "name"),
             timezone=safe_get(data, "timeZone"),
             latitude=safe_get(data, "latitude"),
@@ -279,13 +288,13 @@ class PowerTrackClient:
             address=safe_get(data, "address"),
             city=safe_get(data, "city"),
             state=safe_get(data, "state"),
-            zip_code=safe_get(data, "zip"),
+            zipCode=safe_get(data, "zip"),
             country=safe_get(data, "country"),
-            install_date=safe_get(data, "installDate"),
-            ac_capacity_kw=safe_get(data, "acCapacityKw"),
-            dc_capacity_kw=safe_get(data, "dcCapacityKw"),
-            module_count=safe_get(data, "moduleCount"),
-            raw_data=data,
+            installDate=safe_get(data, "installDate"),
+            acCapacityKw=safe_get(data, "acCapacityKw"),
+            dcCapacityKw=safe_get(data, "dcCapacityKw"),
+            moduleCount=safe_get(data, "moduleCount"),
+            rawData=data,
         )
 
     def get_sites(self, site_list_file: Optional[str] = None) -> SiteList:
@@ -318,7 +327,7 @@ class PowerTrackClient:
 
     def update_site_config(
         self,
-        site_id: str,
+        siteId: str,
         config_data: Dict[str, Any],
         return_full_response: bool = True
     ) -> UpdateResult:
@@ -326,72 +335,72 @@ class PowerTrackClient:
         Update site configuration.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
             config_data: Configuration data to update
             return_full_response: Whether to return original/updated data for backup
 
         Returns:
             UpdateResult with success status and optional response data
         """
-        site_id = parse_site_id(site_id)
-        referer = f"{self.base_url}/powertrack/{site_id}/administration/config"
+        siteId = parse_site_id(siteId)
+        referer = f"{self.base_url}/powertrack/{siteId}/administration/config"
 
         try:
             # GET current configuration
-            original_data = self.get_json(f"/api/edit/site/{site_id}", referer=referer)
-            if not original_data:
+            originalData = self.get_json(f"/api/edit/site/{siteId}", referer=referer)
+            if not originalData:
                 return UpdateResult(
                     success=False,
-                    error_message="Failed to fetch current site configuration"
+                    errorMessage="Failed to fetch current site configuration"
                 )
 
             # Merge updates into current config
-            merged_data = deep_merge_dicts(original_data, config_data)
+            merged_data = deep_merge_dicts(originalData, config_data)
 
             # Add key to payload for PUT request
-            put_payload = {**merged_data, "key": site_id}
+            put_payload = {**merged_data, "key": siteId}
 
             # PUT updated configuration
-            put_response = self.put_json("/api/edit/site", put_payload, referer=referer)
+            putResponse = self.put_json("/api/edit/site", put_payload, referer=referer)
 
-            if put_response is None:
+            if putResponse is None:
                 return UpdateResult(
                     success=False,
-                    original_data=original_data if return_full_response else None,
-                    updated_data=merged_data if return_full_response else None,
-                    error_message="PUT request failed"
+                    originalData=originalData if return_full_response else None,
+                    updatedData=merged_data if return_full_response else None,
+                    errorMessage="PUT request failed"
                 )
 
             return UpdateResult(
                 success=True,
-                original_data=original_data if return_full_response else None,
-                updated_data=merged_data if return_full_response else None,
-                put_response=put_response if return_full_response else None
+                originalData=originalData if return_full_response else None,
+                updatedData=merged_data if return_full_response else None,
+                putResponse=putResponse if return_full_response else None
             )
 
         except Exception as e:
             return UpdateResult(
                 success=False,
-                error_message=str(e)
+                errorMessage=str(e)
             )
 
     # ===== HARDWARE METHODS =====
 
-    def get_hardware_list(self, site_id: str) -> List[Hardware]:
+    def get_hardware_list(self, siteId: str) -> List[Hardware]:
         """
         Get hardware list for a site.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             List of Hardware objects
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
         # Try operational API first
         try:
-            data = self.get_json(f"/api/view/sitehardwareproduction/{site_id}")
+            data = self.get_json(f"/api/view/sitehardwareproduction/{siteId}")
             if data and "hardware" in data:
                 return self._parse_hardware_list(data["hardware"])
         except APIError:
@@ -400,7 +409,7 @@ class PowerTrackClient:
         # Fall back to /api/node
         try:
             payload = {
-                "key": site_id,
+                "key": siteId,
                 "context": "query",
                 "kinds": ["customer", "site", "hardware"],
                 "subKinds": [],
@@ -429,7 +438,7 @@ class PowerTrackClient:
 
         # Final fallback to bulk hardware API
         try:
-            data = self.get_json(f"/api/edit/bulkhardware/{site_id}")
+            data = self.get_json(f"/api/edit/bulkhardware/{siteId}")
             if data and "list" in data:
                 hardware_items = []
                 for group in data["list"]:
@@ -451,7 +460,7 @@ class PowerTrackClient:
 
     def update_site_hardware(
         self,
-        site_id: str,
+        siteId: str,
         hardware_data: List[Dict[str, Any]],
         return_full_response: bool = True
     ) -> UpdateResult:
@@ -459,59 +468,59 @@ class PowerTrackClient:
         Update site hardware configurations.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
             hardware_data: List of hardware configuration objects to update
             return_full_response: Whether to return original/updated data for backup
 
         Returns:
             UpdateResult with success status and optional response data
         """
-        site_id = parse_site_id(site_id)
-        referer = f"{self.base_url}/powertrack/{site_id}/administration/hardware/list"
+        siteId = parse_site_id(siteId)
+        referer = f"{self.base_url}/powertrack/{siteId}/administration/hardware/list"
 
         try:
             # GET current site hardware configuration
-            original_data = self.get_json(f"/api/edit/sitehardware/{site_id}", referer=referer)
-            if not original_data:
+            originalData = self.get_json(f"/api/edit/sitehardware/{siteId}", referer=referer)
+            if not originalData:
                 return UpdateResult(
                     success=False,
-                    error_message="Failed to fetch current site hardware configuration"
+                    errorMessage="Failed to fetch current site hardware configuration"
                 )
 
-            # The original_data should contain a "hardware" array
-            current_hardware = original_data.get("hardware", [])
+            # The originalData should contain a "hardware" array
+            current_hardware = originalData.get("hardware", [])
 
             # Create updates dict with hardware array
             updates = {"hardware": hardware_data}
 
             # Merge updates into current config
-            merged_data = deep_merge_dicts(original_data, updates)
+            merged_data = deep_merge_dicts(originalData, updates)
 
             # Prepare PUT payload
-            put_payload = {**merged_data, "key": site_id}
+            put_payload = {**merged_data, "key": siteId}
 
             # PUT updated site hardware
-            put_response = self.put_json("/api/edit/sitehardware", put_payload, referer=referer)
+            putResponse = self.put_json("/api/edit/sitehardware", put_payload, referer=referer)
 
-            if put_response is None:
+            if putResponse is None:
                 return UpdateResult(
                     success=False,
-                    original_data=original_data if return_full_response else None,
-                    updated_data=merged_data if return_full_response else None,
-                    error_message="PUT request failed"
+                    originalData=originalData if return_full_response else None,
+                    updatedData=merged_data if return_full_response else None,
+                    errorMessage="PUT request failed"
                 )
 
             return UpdateResult(
                 success=True,
-                original_data=original_data if return_full_response else None,
-                updated_data=merged_data if return_full_response else None,
-                put_response=put_response if return_full_response else None
+                originalData=originalData if return_full_response else None,
+                updatedData=merged_data if return_full_response else None,
+                putResponse=putResponse if return_full_response else None
             )
 
         except Exception as e:
             return UpdateResult(
                 success=False,
-                error_message=str(e)
+                errorMessage=str(e)
             )
 
     def _parse_hardware_list(self, hardware_data: List[Dict[str, Any]]) -> List[Hardware]:
@@ -522,24 +531,24 @@ class PowerTrackClient:
                 hardware = Hardware(
                     key=item.get("key", ""),
                     name=item.get("name", ""),
-                    function_code=item.get("functionCode"),
+                    functionCode=item.get("functionCode"),
                     hid=item.get("hid"),
-                    short_name=item.get("shortName"),
-                    serial_num=item.get("serialNum"),
-                    mfr_model=item.get("mfrModel"),
-                    device_id=item.get("deviceID"),
-                    install_date=item.get("installDate"),
-                    device_address=item.get("deviceAddress"),
+                    shortName=item.get("shortName"),
+                    serialNum=item.get("serialNum"),
+                    mfrModel=item.get("mfrModel"),
+                    deviceId=item.get("deviceId"),
+                    installDate=item.get("installDate"),
+                    deviceAddress=item.get("deviceAddress"),
                     port=item.get("port"),
-                    unit_id=item.get("unitID"),
+                    unitId=item.get("unitID"),
                     baud=item.get("baud"),
-                    gateway_id=item.get("gatewayID"),
-                    enable_bool=item.get("enableBool", True),
-                    hardware_status=item.get("hardwareStatus"),
-                    capacity_kw=item.get("capacityKW"),
-                    inverter_kw=item.get("inverterKw"),
-                    driver_name=item.get("driverName"),
-                    out_of_service=item.get("outOfService", False),
+                    gatewayId=item.get("gatewayID"),
+                    enableBool=item.get("enableBool", True),
+                    hardwareStatus=item.get("hardwareStatus"),
+                    capacityKw=item.get("capacityKW"),
+                    inverterKw=item.get("inverterKw"),
+                    driverName=item.get("driverName"),
+                    outOfService=item.get("outOfService", False),
                 )
                 hardware_list.append(hardware)
             except Exception as e:
@@ -569,7 +578,7 @@ class PowerTrackClient:
         summary = Hardware(
             key=hardware_key,
             name=data.get("name", ""),
-            function_code=data.get("functionCode"),
+            functionCode=data.get("functionCode"),
             hid=data.get("hid"),
         )
 
@@ -597,59 +606,59 @@ class PowerTrackClient:
 
         try:
             # GET current configuration
-            original_data = self.get_json(f"/api/edit/hardware/{hardware_id}", referer=referer)
-            if not original_data:
+            originalData = self.get_json(f"/api/edit/hardware/{hardware_id}", referer=referer)
+            if not originalData:
                 return UpdateResult(
                     success=False,
-                    error_message="Failed to fetch current hardware configuration"
+                    errorMessage="Failed to fetch current hardware configuration"
                 )
 
             # Merge updates into current config
-            merged_data = deep_merge_dicts(original_data, config_data)
+            merged_data = deep_merge_dicts(originalData, config_data)
 
             # Add hardwareId to payload for PUT request
             put_payload = {**merged_data, "hardwareId": hardware_id}
 
             # PUT updated configuration
-            put_response = self.put_json("/api/edit/hardware", put_payload, referer=referer)
+            putResponse = self.put_json("/api/edit/hardware", put_payload, referer=referer)
 
-            if put_response is None:
+            if putResponse is None:
                 return UpdateResult(
                     success=False,
-                    original_data=original_data if return_full_response else None,
-                    updated_data=merged_data if return_full_response else None,
-                    error_message="PUT request failed"
+                    originalData=originalData if return_full_response else None,
+                    updatedData=merged_data if return_full_response else None,
+                    errorMessage="PUT request failed"
                 )
 
             return UpdateResult(
                 success=True,
-                original_data=original_data if return_full_response else None,
-                updated_data=merged_data if return_full_response else None,
-                put_response=put_response if return_full_response else None
+                originalData=originalData if return_full_response else None,
+                updatedData=merged_data if return_full_response else None,
+                putResponse=putResponse if return_full_response else None
             )
 
         except Exception as e:
             return UpdateResult(
                 success=False,
-                error_message=str(e)
+                errorMessage=str(e)
             )
 
-    def bulk_update_hardware(self, site_id: str, hardware_data: List[Dict[str, Any]]) -> bool:
+    def bulk_update_hardware(self, siteId: str, hardware_data: List[Dict[str, Any]]) -> bool:
         """
         Bulk update hardware configurations for a site.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
             hardware_data: List of hardware configuration data
 
         Returns:
             True if bulk update successful, False otherwise
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
-        payload = {"siteId": site_id, "hardware": hardware_data}
+        payload = {"siteId": siteId, "hardware": hardware_data}
 
-        result = self.put_json(f"/api/edit/bulkhardware/{site_id}", payload)
+        result = self.put_json(f"/api/edit/bulkhardware/{siteId}", payload)
 
         return result is not None
 
@@ -673,14 +682,14 @@ class PowerTrackClient:
     # ===== ALERT METHODS =====
 
     def get_alert_triggers(
-        self, hardware_key: str, last_changed: Optional[str] = None
+        self, hardware_key: str, lastChanged: Optional[str] = None
     ) -> Optional[AlertTrigger]:
         """
         Get alert triggers for hardware.
 
         Args:
             hardware_key: Hardware key
-            last_changed: Last changed timestamp (optional)
+            lastChanged: Last changed timestamp (optional)
 
         Returns:
             AlertTrigger object or None
@@ -688,8 +697,8 @@ class PowerTrackClient:
         hardware_key = parse_hardware_id(hardware_key)
 
         endpoint = f"/api/alerttrigger/{hardware_key}"
-        if last_changed:
-            endpoint += f"?lastChanged={last_changed}"
+        if lastChanged:
+            endpoint += f"?lastChanged={lastChanged}"
 
         referer = f"{self.base_url}/powertrack/{hardware_key}/administration/alertsettings"
         data = self.get_json(endpoint, referer=referer)
@@ -699,13 +708,13 @@ class PowerTrackClient:
 
         return AlertTrigger(
             key=hardware_key,
-            parent_key=data.get("parentKey"),
-            asset_code=data.get("assetCode"),
-            calculated_capacity=data.get("calculatedCapacity"),
+            parentKey=data.get("parentKey"),
+            assetCode=data.get("assetCode"),
+            calculatedCapacity=data.get("calculatedCapacity"),
             capacity=data.get("capacity"),
-            last_changed=data.get("lastChanged"),
+            lastChanged=data.get("lastChanged"),
             triggers=data.get("triggers", []),
-            default_triggers=data.get("defaultTriggers", []),
+            defaultTriggers=data.get("defaultTriggers", []),
         )
 
     def update_alert_triggers(
@@ -734,25 +743,25 @@ class PowerTrackClient:
             put_payload = {**trigger_data, "parentKey": hardware_key}
 
             # PUT updated trigger
-            put_response = self.put_json("/api/alerttrigger", put_payload, referer=referer)
+            putResponse = self.put_json("/api/alerttrigger", put_payload, referer=referer)
 
-            if put_response is None:
+            if putResponse is None:
                 return UpdateResult(
                     success=False,
-                    updated_data=put_payload if return_full_response else None,
-                    error_message="PUT request failed"
+                    updatedData=put_payload if return_full_response else None,
+                    errorMessage="PUT request failed"
                 )
 
             return UpdateResult(
                 success=True,
-                updated_data=put_payload if return_full_response else None,
-                put_response=put_response if return_full_response else None
+                updatedData=put_payload if return_full_response else None,
+                putResponse=putResponse if return_full_response else None
             )
 
         except Exception as e:
             return UpdateResult(
                 success=False,
-                error_message=str(e)
+                errorMessage=str(e)
             )
 
     def add_alert_trigger(self, hardware_key: str, trigger_data: Dict[str, Any]) -> bool:
@@ -792,47 +801,47 @@ class PowerTrackClient:
 
     # ===== MODELING METHODS =====
 
-    def get_modeling_data(self, site_id: str) -> Optional[ModelingData]:
+    def get_modeling_data(self, siteId: str) -> Optional[ModelingData]:
         """
         Get modeling data for site.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             ModelingData object or None
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
-        referer = f"{self.base_url}/powertrack/{site_id}/administration/modeling"
-        data = self.get_json(f"/api/edit/modeling/{site_id}", referer=referer)
+        referer = f"{self.base_url}/powertrack/{siteId}/administration/modeling"
+        data = self.get_json(f"/api/edit/modeling/{siteId}", referer=referer)
 
         if not data:
             return None
 
         return ModelingData(
-            site_id=site_id,
-            pv_config=data.get("pvConfig", {}),
+            siteId=siteId,
+            pvConfig=data.get("pvConfig", {}),
             inverters=data.get("pvConfig", {}).get("inverters", []),
             ts=data.get("ts"),
-            raw_data=data,
+            rawData=data,
         )
 
-    def update_modeling_data(self, site_id: str, modeling_data: Dict[str, Any]) -> bool:
+    def update_modeling_data(self, siteId: str, modeling_data: Dict[str, Any]) -> bool:
         """
         Update modeling data for site.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
             modeling_data: Modeling configuration data
 
         Returns:
             True if update successful, False otherwise
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
-        referer = f"{self.base_url}/powertrack/{site_id}/administration/modeling"
-        result = self.put_json(f"/api/edit/modeling/{site_id}", modeling_data, referer=referer)
+        referer = f"{self.base_url}/powertrack/{siteId}/administration/modeling"
+        result = self.put_json(f"/api/edit/modeling/{siteId}", modeling_data, referer=referer)
 
         return result is not None
 
@@ -874,7 +883,7 @@ class PowerTrackClient:
 
     def get_site_data(
         self,
-        site_id: str,
+        siteId: str,
         include_hardware: bool = True,
         include_alerts: bool = True,
         include_modeling: bool = True,
@@ -883,7 +892,7 @@ class PowerTrackClient:
         Get comprehensive site data.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
             include_hardware: Whether to fetch hardware data
             include_alerts: Whether to fetch alert data
             include_modeling: Whether to fetch modeling data
@@ -891,18 +900,18 @@ class PowerTrackClient:
         Returns:
             SiteData object or None
         """
-        site_id = parse_site_id(site_id)
+        siteId = parse_site_id(siteId)
 
         # Get basic site info
-        site = Site(key=site_id)
+        site = Site(key=siteId)
 
         # Get config
-        config = self.get_site_config(site_id)
+        config = self.get_site_config(siteId)
 
         # Get hardware
         hardware_details = []
         if include_hardware:
-            hardware_list = self.get_hardware_list(site_id)
+            hardware_list = self.get_hardware_list(siteId)
             for hw in hardware_list:
                 details = self.get_hardware_details(hw.key)
                 if details:
@@ -919,7 +928,7 @@ class PowerTrackClient:
         # Get modeling
         modeling = None
         if include_modeling:
-            modeling = self.get_modeling_data(site_id)
+            modeling = self.get_modeling_data(siteId)
 
         return SiteData(
             site=site,
@@ -927,7 +936,7 @@ class PowerTrackClient:
             hardware=hardware_details,
             alerts=alerts,
             modeling=modeling,
-            fetched_at=datetime.now(),
+            fetchedAt=datetime.now(),
         )
 
     # ===== NEW EXPANDED API METHODS =====
@@ -977,94 +986,161 @@ class PowerTrackClient:
             mergeHash=data.get("mergeHash", ""),
         )
 
-    def get_site_overview(self, site_id: str) -> Optional[SiteOverview]:
+    def get_site_overview(self, siteId: str) -> Optional[SiteOverview]:
         """
         Get real-time site performance metrics.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             SiteOverview object or None if not found
         """
-        portfolio = self.get_portfolio_overview_from_site(site_id)
+        portfolio = self.get_portfolio_overview_from_site(siteId)
         if portfolio:
             for site in portfolio.sites:
-                if site.key == site_id:
+                if site.key == siteId:
                     return site
         return None
 
-    def get_portfolio_overview_from_site(self, site_id: str) -> Optional[PortfolioMetrics]:
+    def get_portfolio_overview_from_site(self, siteId: str) -> Optional[PortfolioMetrics]:
         """
         Get portfolio data by inferring customer ID from site.
 
         Args:
-            site_id: Site ID to get customer from
+            siteId: Site ID to get customer from
 
         Returns:
             PortfolioMetrics or None
         """
         # First get site details to find customer ID
-        site_info = self.get_site_detailed_info(site_id)
-        if not site_info or not site_info.parent_key:
+        site_info = self.get_site_detailed_info(siteId)
+        if not site_info or not site_info.parentKey:
             return None
 
-        customer_id = site_info.parent_key
+        customer_id = site_info.parentKey
         return self.get_portfolio_overview(customer_id)
 
-    def get_site_detailed_info(self, site_id: str) -> Optional[SiteDetailedInfo]:
+    def get_site_detailed_info(self, siteId: str) -> Optional[SiteDetailedInfo]:
         """
         Get detailed site information including contracts and configuration.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             SiteDetailedInfo object or None if not found
         """
-        site_id = parse_site_id(site_id)
-        endpoint = f"/api/view/site/{site_id}"
+        siteId = parse_site_id(siteId)
+        endpoint = f"/api/view/site/{siteId}"
         params = {"lastChanged": "1900-01-01T00:00:00.000Z"}
 
         data = self.get_json(endpoint, params=params)
         if not data:
             return None
 
-        return SiteDetailedInfo(**data)
+        # Map API camelCase to dataclass camelCase fields
+        return SiteDetailedInfo(
+            key=data.get('key', ''),
+            name=data.get('name', ''),
+            isMonitored=data.get('isMonitored', False),
+            cellModemContractEndDate=data.get('cellModemContractEndDate'),
+            address=data.get('address', {}),
+            cellModemContractStartDate=data.get('cellModemContractStartDate'),
+            energyCapacityUnit=data.get('energyCapacityUnit', 0),
+            longitude=data.get('longitude', 0.0),
+            parentKey=data.get('parentKey', ''),
+            weatherMode=data.get('weatherMode', 0),
+            monitoringContractIsManual=data.get('monitoringContractIsManual', False),
+            cellModemContractCustomBanner=data.get('cellModemContractCustomBanner', False),
+            monitoringContractWarnDate=data.get('monitoringContractWarnDate'),
+            workingStatus=data.get('workingStatus', ''),
+            capacityDcUnit=data.get('capacityDcUnit', 0),
+            elevation=data.get('elevation', 0),
+            dailyProductionEstimate=data.get('dailyProductionEstimate', 0.0),
+            lastChanged=data.get('lastChanged', ''),
+            monthlyProductionEstimate=data.get('monthlyProductionEstimate', 0.0),
+            ratedPowerUnit=data.get('ratedPowerUnit', 0),
+            monitoringContractCustomBanner=data.get('monitoringContractCustomBanner', False),
+            monitoringContractStatus=data.get('monitoringContractStatus', 0),
+            monitoringContractEndDate=data.get('monitoringContractEndDate'),
+            estimatedCommissioningDate=data.get('estimatedCommissioningDate'),
+            cellModemContractAccessNote=data.get('cellModemContractAccessNote', ''),
+            cellModemContractTerminateDate=data.get('cellModemContractTerminateDate'),
+            cellModemContractIsManual=data.get('cellModemContractIsManual', False),
+            customerLogo=data.get('customerLogo', ''),
+            capacityAc=data.get('capacityAc', 0),
+            customQueryKey=data.get('customQueryKey', ''),
+            preferredWsForEstimatedInsolation=data.get('preferredWsForEstimatedInsolation', 0),
+            requiresPubIp=data.get('requiresPubIp', False),
+            defaultQuery=data.get('defaultQuery', 0),
+            monitoringContractWillNotRenew=data.get('monitoringContractWillNotRenew', False),
+            capacityAcUnit=data.get('capacityAcUnit', 0),
+            status=data.get('status', 0),
+            latitude=data.get('latitude', 0.0),
+            ratedPower=data.get('ratedPower', 0),
+            advancedSiteConfiguration=data.get('advancedSiteConfiguration', False),
+            monitoringContractTerminateDate=data.get('monitoringContractTerminateDate'),
+            actualCommissioningDate=data.get('actualCommissioningDate'),
+            estimatedLosses=data.get('estimatedLosses', {}),
+            cellModemContractWarnDate=data.get('cellModemContractWarnDate'),
+            monitoringContractAccessNote=data.get('monitoringContractAccessNote', ''),
+            validDataDate=data.get('validDataDate', ''),
+            paymentStatus=data.get('paymentStatus', 0),
+            capacityDc=data.get('capacityDc', 0.0),
+            monitoringContractStartDate=data.get('monitoringContractStartDate'),
+            energyCapacity=data.get('energyCapacity', 0),
+            overviewChart1=data.get('overviewChart1', ''),
+            overviewChart2=data.get('overviewChart2', ''),
+            cellModemContractWillNotRenew=data.get('cellModemContractWillNotRenew', False),
+            siteType=data.get('siteType', 0),
+            sitePhotos=data.get('sitePhotos')
+        )
 
     def get_chart_data(
         self,
         chart_type: int,
-        site_id: str,
+        siteId: str,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        bin_size: Optional[int] = None,
     ) -> Optional[ChartData]:
         """
         Get chart data for visualization.
 
         Args:
             chart_type: Chart type ID (from /api/view/chart/builtin)
-            site_id: Site ID
+            siteId: Site ID
             start_date: Start date (ISO format)
             end_date: End date (ISO format)
+            bin_size: Bin size in minutes (optional, let API choose if None)
 
         Returns:
             ChartData object or None if failed
         """
-        site_id = parse_site_id(site_id)
+        site_key = parse_site_id(siteId)
 
-        # Build query payload
+        # Build POST payload based on actual API structure from fetch logs
+        from datetime import datetime, timedelta
+        end_date = end_date or datetime.utcnow().strftime('%Y-%m-%d')
+        start_date = start_date or (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d')
+
         payload = {
+            "chartType": chart_type,
             "context": "site",
-            "hardwareByType": [5, 2],  # Weather and production meters
-            "siteKeys": [site_id],
+            "source": [site_key],
+            "binSize": bin_size,
+            "sectionCode": -1,
+            "query": None,
+            "start": start_date,
+            "end": end_date,
         }
 
-        if start_date and end_date:
-            payload.update({"spanFrom": start_date, "spanTo": end_date})
-
-        data = self.post_json("/api/view/chart", payload)
+        # Chart API requires specific referer
+        referer = f"https://apps.alsoenergy.com/powertrack/{siteId}/overview/dashboard"
+        data = self.post_json("/api/view/chart", payload, referer=referer)
         if not data:
+            logger.warning(f"No data returned from chart API for site {siteId}, chart_type {chart_type}")
             return None
 
         # Parse series data
@@ -1081,51 +1157,52 @@ class PowerTrackClient:
                 name=series_data.get("name", ""),
                 key=series_data.get("key", ""),
                 dataXy=parsed_xy,
-                color=series_data.get("color", ""),
-                custom_unit=series_data.get("customUnit", ""),
-                data_max=series_data.get("dataMax", 0.0),
-                data_min=series_data.get("dataMin", 0.0),
-                diameter=series_data.get("diameter", 0),
-                fit_exponent=series_data.get("fitExponent", 0),
-                header=series_data.get("header", ""),
-                line_color=series_data.get("lineColor", ""),
-                line_type=series_data.get("lineType", 0),
-                line_width=series_data.get("lineWidth", 2),
-                right_axis=series_data.get("rightAxis", False),
-                units=series_data.get("units", 0),
-                use_binned_data=series_data.get("useBinnedData", False),
-                visible=series_data.get("visible", True),
-                x_series_header=series_data.get("xSeriesHeader", ""),
-                x_series_key=series_data.get("xSeriesKey", ""),
-                x_series_name=series_data.get("xSeriesName", ""),
-                x_units=series_data.get("xUnits", ""),
-                y_axis_index=series_data.get("yAxisIndex", 0),
-                y_max=series_data.get("yMax"),
-                y_min=series_data.get("yMin"),
-                alert_message_map=series_data.get("alertMessageMap"),
+                color=series_data.get("color"),
+                customUnit=series_data.get("customUnit"),
+                dataMax=series_data.get("dataMax"),
+                dataMin=series_data.get("dataMin"),
+                diameter=series_data.get("diameter"),
+                fitExponent=series_data.get("fitExponent"),
+                header=series_data.get("header"),
+                lineColor=series_data.get("lineColor"),
+                lineType=series_data.get("lineType"),
+                lineWidth=series_data.get("lineWidth"),
+                rightAxis=series_data.get("rightAxis"),
+                units=series_data.get("units"),
+                useBinnedData=series_data.get("useBinnedData"),
+                visible=series_data.get("visible"),
+                xSeriesHeader=series_data.get("xSeriesHeader"),
+                xSeriesKey=series_data.get("xSeriesKey"),
+                xSeriesName=series_data.get("xSeriesName"),
+                xUnits=series_data.get("xUnits"),
+                yAxisIndex=series_data.get("yAxisIndex"),
+                yMax=series_data.get("yMax"),
+                yMin=series_data.get("yMin"),
+                alertMessageMap=series_data.get("alertMessageMap"),
             )
             series.append(series_obj)
 
         return ChartData(
-            allow_small_bin_size=data.get("allowSmallBinSize", True),
-            bin_size=data.get("binSize", 1440),
-            current_now_bin_index=data.get("currentNowBinIndex", 0),
-            data_not_available=data.get("dataNotAvailable", False),
+            allowSmallBinSize=data.get("allowSmallBinSize", False),
+            binSize=data.get("binSize", 0),
+            currentNowBinIndex=data.get("currentNowBinIndex", 0),
+            dataNotAvailable=data.get("dataNotAvailable", False),
             durations=data.get("durations", []),
             end=data.get("end", ""),
-            error_string=data.get("errorString", ""),
-            hardware_keys=data.get("hardwareKeys", []),
-            has_alert_messages=data.get("hasAlertMessages", False),
-            has_overridden_query=data.get("hasOverriddenQuery", False),
-            is_category_chart=data.get("isCategoryChart", False),
-            is_summary_chart=data.get("isSummaryChart", False),
-            is_using_daylight_savings=data.get("isUsingDaylightSavings", False),
+            errorString=data.get("errorString", ""),
+            hardwareKeys=data.get("hardwareKeys", []),
+            hasAlertMessages=data.get("hasAlertMessages", False),
+            hasOverriddenQuery=data.get("hasOverriddenQuery", False),
+            isCategoryChart=data.get("isCategoryChart", False),
+            isSummaryChart=data.get("isSummaryChart", False),
+            isUsingDaylightSavings=data.get("isUsingDaylightSavings", False),
             key=data.get("key", ""),
-            last_changed=data.get("lastChanged", ""),
-            last_data_datetime=data.get("lastDataDatetime", ""),
-            named_results=data.get("namedResults", {}),
-            render_type=data.get("renderType", 0),
+            lastChanged=data.get("lastChanged", ""),
+            lastDataDatetime=data.get("lastDataDatetime", ""),
+            namedResults=data.get("namedResults", {}),
+            renderType=data.get("renderType", 0),
             series=series,
+            summaryTable=data.get("summaryTable", []),
             start=data.get("start"),
         )
 
@@ -1138,7 +1215,12 @@ class PowerTrackClient:
         """
         data = self.get_json("/api/view/chart/builtin")
         if not data:
+            logger.warning("No chart definitions returned from API (endpoint may not be available)")
             return []
+
+        # The API might return charts in different formats
+        if isinstance(data, list):
+            return data
 
         # Extract predefined charts from sections
         charts = []
@@ -1146,10 +1228,14 @@ class PowerTrackClient:
             for chart in section.get("predefinedCharts", []):
                 charts.append(chart)
 
+        # If no charts found in sections, return whatever we got
+        if not charts and data:
+            return [data] if isinstance(data, dict) else []
+
         return charts
 
     def get_alert_summary(
-        self, customer_id: Optional[str] = None, site_id: Optional[str] = None
+        self, customer_id: Optional[str] = None, siteId: Optional[str] = None
     ) -> Optional[AlertSummaryResponse]:
         """
         Get alert summary for customer or site.
@@ -1161,11 +1247,11 @@ class PowerTrackClient:
         """
         if customer_id:
             endpoint = f"/api/view/activealerts/activesummary/{customer_id}"
-        elif site_id:
-            site_id = parse_site_id(site_id)
-            endpoint = f"/api/view/activealerts/activesummary/{site_id}"
+        elif siteId:
+            siteId = parse_site_id(siteId)
+            endpoint = f"/api/view/activealerts/activesummary/{siteId}"
         else:
-            raise ValueError("Either customer_id or site_id must be provided")
+            raise ValueError("Either customer_id or siteId must be provided")
 
         data = self.get_json(endpoint)
         if not data:
@@ -1201,12 +1287,12 @@ class PowerTrackClient:
                 max_sev = summary_data.get("maxSeverity", summary_data.get("max_severity", 0))
                 count = summary_data.get("count", summary_data.get("cnt", 0))
                 hardware_summaries[hw_key] = AlertSummary(
-                    hardware_key=hw_key,
-                    max_severity=max_sev,
+                    hardwareKey=hw_key,
+                    maxSeverity=max_sev,
                     count=count,
                 )
 
-        return AlertSummaryResponse(hardware_summaries=hardware_summaries)
+        return AlertSummaryResponse(hardwareSummaries=hardware_summaries)
 
     def get_hardware_diagnostics(self, hardware_id: str) -> Optional[HardwareDiagnostics]:
         """
@@ -1240,26 +1326,26 @@ class PowerTrackClient:
             return None
 
         return ReportingCapabilities(
-            can_edit_auto_report=data.get("canEditAutoReport", False),
-            can_add_email_report=data.get("canAddEmailReport", False),
-            can_add_summary_report=data.get("canAddSummaryReport", False),
-            can_add_auto_report=data.get("canAddAutoReport", False),
-            can_add_user_report=data.get("canAddUserReport", False),
+            canEditAutoReport=data.get("canEditAutoReport", False),
+            canAddEmailReport=data.get("canAddEmailReport", False),
+            canAddSummaryReport=data.get("canAddSummaryReport", False),
+            canAddAutoReport=data.get("canAddAutoReport", False),
+            canAddUserReport=data.get("canAddUserReport", False),
             views=data.get("views", []),
         )
 
-    def get_site_hardware_production(self, site_id: str) -> List[Dict[str, Any]]:
+    def get_site_hardware_production(self, siteId: str) -> List[Dict[str, Any]]:
         """
         Get hardware production data for a site.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             List of hardware production data
         """
-        site_id = parse_site_id(site_id)
-        endpoint = f"/api/view/sitehardwareproduction/{site_id}"
+        siteId = parse_site_id(siteId)
+        endpoint = f"/api/view/sitehardwareproduction/{siteId}"
 
         data = self.get_json(endpoint)
         if not data:
@@ -1296,18 +1382,18 @@ class PowerTrackClient:
 
         return data.get("entries", [])
 
-    def get_site_links(self, site_id: str) -> List[Dict[str, Any]]:
+    def get_site_links(self, siteId: str) -> List[Dict[str, Any]]:
         """
         Get site links and sharing information.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             List of site links
         """
-        site_id = parse_site_id(site_id)
-        endpoint = f"/api/view/sitelinks/{site_id}"
+        siteId = parse_site_id(siteId)
+        endpoint = f"/api/view/sitelinks/{siteId}"
 
         data = self.get_json(endpoint)
         if not data:
@@ -1315,18 +1401,18 @@ class PowerTrackClient:
 
         return data.get("links", [])
 
-    def get_site_shares(self, site_id: str) -> List[Dict[str, Any]]:
+    def get_site_shares(self, siteId: str) -> List[Dict[str, Any]]:
         """
         Get site sharing configurations.
 
         Args:
-            site_id: Site ID
+            siteId: Site ID
 
         Returns:
             List of site shares
         """
-        site_id = parse_site_id(site_id)
-        endpoint = f"/api/view/siteshares/{site_id}"
+        siteId = parse_site_id(siteId)
+        endpoint = f"/api/view/siteshares/{siteId}"
 
         data = self.get_json(endpoint)
         if not data:
@@ -1352,17 +1438,20 @@ class PowerTrackClient:
         if not data:
             return []
 
+        # API returns list directly, not wrapped in object
+        if isinstance(data, list):
+            return data
         return data.get("curves", [])
 
     def get_pvsyst_modules(
-        self, hardware_id: Optional[str] = None, site_id: Optional[str] = None
+        self, hardware_id: Optional[str] = None, siteId: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get PVSyst module configurations.
 
         Args:
             hardware_id: Specific hardware ID
-            site_id: Site ID (alternative to hardware_id)
+            siteId: Site ID (alternative to hardware_id)
 
         Returns:
             List of PVSyst modules
@@ -1370,16 +1459,19 @@ class PowerTrackClient:
         if hardware_id:
             hardware_id = parse_hardware_id(hardware_id)
             endpoint = f"/api/view/pvsystmodules/{hardware_id}"
-        elif site_id:
-            site_id = parse_site_id(site_id)
-            endpoint = f"/api/view/pvsystmodules/{site_id}"
+        elif siteId:
+            siteId = parse_site_id(siteId)
+            endpoint = f"/api/view/pvsystmodules/{siteId}"
         else:
-            raise ValueError("Either hardware_id or site_id must be provided")
+            raise ValueError("Either hardware_id or siteId must be provided")
 
         data = self.get_json(endpoint)
         if not data:
             return []
 
+        # API returns list directly, not wrapped in object
+        if isinstance(data, list):
+            return data
         return data.get("modules", [])
 
     def get_driver_settings(self, hardware_id: str) -> Optional[Dict[str, Any]]:
@@ -1413,7 +1505,31 @@ class PowerTrackClient:
         if not data:
             return []
 
+        # API returns list directly, not wrapped in object
+        if isinstance(data, list):
+            return data
         return data.get("settings", [])
+
+    def get_driver_list(self, code: int = 2) -> List[Dict[str, Any]]:
+        """
+        Get list of available drivers by function code.
+
+        Args:
+            code: Function code for hardware type (default: 2 = Production Meter)
+
+        Returns:
+            List of driver configurations
+        """
+        endpoint = f"/api/lookuplist/drivers/{code}"
+
+        data = self.get_json(endpoint)
+        if not data:
+            return []
+
+        # API returns list directly
+        if isinstance(data, list):
+            return data
+        return []
 
     def get_register_offsets(self, hardware_id: str) -> Dict[str, Any]:
         """

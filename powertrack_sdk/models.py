@@ -26,24 +26,24 @@ class Hardware:
     """Represents a hardware device."""
     key: str
     name: str
-    function_code: Optional[int] = None
+    functionCode: Optional[int] = None
     hid: Optional[int] = None
-    short_name: Optional[str] = None
-    serial_num: Optional[str] = None
-    mfr_model: Optional[str] = None
-    device_id: Optional[str] = None
-    install_date: Optional[str] = None
-    device_address: Optional[str] = None
+    shortName: Optional[str] = None
+    serialNum: Optional[str] = None
+    mfrModel: Optional[str] = None
+    deviceId: Optional[str] = None
+    installDate: Optional[str] = None
+    deviceAddress: Optional[str] = None
     port: Optional[str] = None
-    unit_id: Optional[str] = None
+    unitId: Optional[str] = None
     baud: Optional[str] = None
-    gateway_id: Optional[str] = None
-    enable_bool: bool = True
-    hardware_status: Optional[str] = None
-    capacity_kw: Optional[float] = None
-    inverter_kw: Optional[float] = None
-    driver_name: Optional[str] = None
-    out_of_service: bool = False
+    gatewayId: Optional[str] = None
+    enableBool: bool = True
+    hardwareStatus: Optional[str] = None
+    capacityKw: Optional[float] = None
+    inverterKw: Optional[float] = None
+    driverName: Optional[str] = None
+    outOfService: bool = False
 
     @property
     def type_name(self) -> str:
@@ -53,47 +53,31 @@ class Hardware:
             1: "Inverter (PV)",
             2: "Production Meter (PM)",
             3: "Type 3",
-            4: "Grid Meter (GM)",
-            5: "Weather Station (WS)",
-            6: "DC Combiner",
-            9: "Kiosk",
-            10: "Gateway (GW)",
-            11: "Cell Modem (CE)",
-            14: "Camera",
-            20: "Extra Meter",
-            21: "DNP3 Server",
-            24: "Tracker",
-            25: "BESS Controller",
-            28: "Data Logger",
-            31: "Data Capture",
-            34: "Relay",
-            37: "BESS Meter",
         }
-
-        if self.function_code is None:
+        if self.functionCode is None:
             return "Unknown"
-        return hardware_types.get(self.function_code, f"Type {self.function_code}")
+        return hardware_types.get(self.functionCode, f"Type {self.functionCode}")
 
 
 @dataclass
 class AlertTrigger:
     """Represents an alert trigger configuration."""
     key: str
-    parent_key: Optional[str] = None
-    asset_code: Optional[str] = None
-    calculated_capacity: Optional[float] = None
+    parentKey: Optional[str] = None
+    assetCode: Optional[str] = None
+    calculatedCapacity: Optional[float] = None
     capacity: Optional[float] = None
-    last_changed: Optional[str] = None
-    is_active: bool = False
-    check_no_snow: bool = False
-    sun_min_elevation: Optional[float] = None
-    delay_hours_trigger: Optional[float] = None
-    delay_hours_resolve: Optional[float] = None
-    check_sun: bool = False
-    has_impact: bool = False
+    lastChanged: Optional[str] = None
+    isActive: bool = False
+    checkNoSnow: bool = False
+    sunMinElevation: Optional[float] = None
+    delayHoursTrigger: Optional[float] = None
+    delayHoursResolve: Optional[float] = None
+    checkSun: bool = False
+    hasImpact: bool = False
     impact: int = 0
     triggers: List[Dict[str, Any]] = field(default_factory=list)
-    default_triggers: List[Dict[str, Any]] = field(default_factory=list)
+    defaultTriggers: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def active_triggers(self) -> List[Dict[str, Any]]:
@@ -104,7 +88,7 @@ class AlertTrigger:
 @dataclass
 class SiteConfig:
     """Represents site configuration data."""
-    site_id: str
+    siteId: str
     name: Optional[str] = None
     timezone: Optional[str] = None
     latitude: Optional[float] = None
@@ -113,23 +97,23 @@ class SiteConfig:
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
-    zip_code: Optional[str] = None
+    zipCode: Optional[str] = None
     country: Optional[str] = None
-    install_date: Optional[str] = None
-    ac_capacity_kw: Optional[float] = None
-    dc_capacity_kw: Optional[float] = None
-    module_count: Optional[int] = None
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    installDate: Optional[str] = None
+    acCapacityKw: Optional[float] = None
+    dcCapacityKw: Optional[float] = None
+    moduleCount: Optional[int] = None
+    rawData: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ModelingData:
     """Represents site modeling data."""
-    site_id: str
-    pv_config: Dict[str, Any] = field(default_factory=dict)
+    siteId: str
+    pvConfig: Dict[str, Any] = field(default_factory=dict)
     inverters: List[Dict[str, Any]] = field(default_factory=list)
     ts: Optional[str] = None
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    rawData: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def total_capacity_kw(self) -> float:
@@ -153,7 +137,7 @@ class SiteData:
     hardware: List[HardwareDetails] = field(default_factory=list)
     alerts: List[AlertTrigger] = field(default_factory=list)
     modeling: Optional[ModelingData] = None
-    fetched_at: Optional[datetime] = None
+    fetchedAt: Optional[datetime] = None
 
     @property
     def hardware_count(self) -> int:
@@ -403,27 +387,27 @@ class ChartSeries:
     key: str
     dataXy: List[Tuple[int, float]]
     color: str
-    custom_unit: str
-    data_max: float
-    data_min: float
+    customUnit: str
+    dataMax: float
+    dataMin: float
     diameter: int
-    fit_exponent: int
+    fitExponent: int
     header: str
-    line_color: str
-    line_type: int
-    line_width: int
-    right_axis: bool
+    lineColor: str
+    lineType: int
+    lineWidth: int
+    rightAxis: bool
     units: int
-    use_binned_data: bool
+    useBinnedData: bool
     visible: bool
-    x_series_header: str
-    x_series_key: str
-    x_series_name: str
-    x_units: str
-    y_axis_index: int
-    y_max: Optional[float]
-    y_min: Optional[float]
-    alert_message_map: Optional[Dict] = None
+    xSeriesHeader: str
+    xSeriesKey: str
+    xSeriesName: str
+    xUnits: str
+    yAxisIndex: int
+    yMax: Optional[float]
+    yMin: Optional[float]
+    alertMessageMap: Optional[Dict] = None
 
     @property
     def data_points(self) -> List[Tuple[int, float]]:
@@ -434,42 +418,43 @@ class ChartSeries:
 @dataclass
 class ChartData:
     """Complete chart data response."""
-    allow_small_bin_size: bool
-    bin_size: int
-    current_now_bin_index: int
-    data_not_available: bool
+    allowSmallBinSize: bool
+    binSize: int
+    currentNowBinIndex: int
+    dataNotAvailable: bool
     durations: List[Dict[str, Any]]
     end: str
-    error_string: str
-    hardware_keys: List[str]
-    has_alert_messages: bool
-    has_overridden_query: bool
-    is_category_chart: bool
-    is_summary_chart: bool
-    is_using_daylight_savings: bool
+    errorString: str
+    hardwareKeys: List[str]
+    hasAlertMessages: bool
+    hasOverriddenQuery: bool
+    isCategoryChart: bool
+    isSummaryChart: bool
+    isUsingDaylightSavings: bool
     key: str
-    last_changed: str
-    last_data_datetime: str
-    named_results: Dict[str, Any]
-    render_type: int
+    lastChanged: str
+    lastDataDatetime: str
+    namedResults: Dict[str, Any]
+    renderType: int
     series: List[ChartSeries]
+    summaryTable: List[Dict[str, Any]]
     start: Optional[str] = None
 
     @property
     def energy_production(self) -> Optional[float]:
         """Get total energy production from named results."""
-        return self.named_results.get('energy')
+        return self.namedResults.get('energy')
 
     @property
     def expected_energy(self) -> Optional[float]:
         """Get expected energy from named results."""
-        return self.named_results.get('expEnergy')
+        return self.namedResults.get('expEnergy')
 
     @property
     def performance_ratio(self) -> Optional[float]:
         """Calculate performance ratio if data available."""
-        energy = self.named_results.get('energy')
-        expected = self.named_results.get('expEnergy')
+        energy = self.namedResults.get('energy')
+        expected = self.namedResults.get('expEnergy')
         if energy and expected and expected > 0:
             return energy / expected
         return None
@@ -479,14 +464,14 @@ class ChartData:
         """Get loss breakdown from named results."""
         loss_keys = ['ageAC', 'clipping', 'downtime', 'inverter', 'inverterLimit',
                     'snow', 'soiling']
-        return {key: self.named_results.get(key, 0) for key in loss_keys}
+        return {key: self.namedResults.get(key, 0) for key in loss_keys}
 
 
 @dataclass
 class AlertSummary:
     """Alert summary for hardware device."""
-    hardware_key: str
-    max_severity: int
+    hardwareKey: str
+    maxSeverity: int
     count: int
 
     @property
@@ -500,35 +485,35 @@ class AlertSummary:
             4: "critical",
             5: "emergency"
         }
-        return severity_map.get(self.max_severity, "unknown")
+        return severity_map.get(self.maxSeverity, "unknown")
 
     @property
     def has_critical_alerts(self) -> bool:
         """Check if hardware has critical or higher alerts."""
-        return self.max_severity >= 4
+        return self.maxSeverity >= 4
 
 
 @dataclass
 class AlertSummaryResponse:
     """Response containing alert summaries by hardware."""
-    hardware_summaries: Dict[str, AlertSummary]
+    hardwareSummaries: Dict[str, AlertSummary]
 
     @property
     def total_alerts(self) -> int:
         """Total number of alerts across all hardware."""
-        return sum(summary.count for summary in self.hardware_summaries.values())
+        return sum(summary.count for summary in self.hardwareSummaries.values())
 
     @property
     def hardware_with_alerts(self) -> List[str]:
         """Hardware keys that have active alerts."""
-        return [key for key, summary in self.hardware_summaries.items()
+        return [key for key, summary in self.hardwareSummaries.items()
                 if summary.count > 0]
 
     @property
     def critical_hardware(self) -> List[str]:
         """Hardware keys with critical alerts."""
-        return [key for key, summary in self.hardware_summaries.items()
-                if summary.has_critical_alerts]
+        return [key for key, summary in self.hardwareSummaries.items()
+                if summary.maxSeverity >= 4]
 
 
 @dataclass
@@ -538,21 +523,21 @@ class RegisterData:
     name: str
     value: Any
     units: str
-    can_modify: bool
-    is_ignored: bool
-    is_stored: bool
-    localized_name: str
-    ping_command: str
+    canModify: bool
+    isIgnored: bool
+    isStored: bool
+    localizedName: str
+    pingCommand: str
     register: str
     scale: str
-    standard_alert_message: List[str]
-    standard_data_name: str
-    write_function: str
-    bustest_command: str = ""
+    standardAlertMessage: List[str]
+    standardDataName: str
+    writeFunction: str
+    bustestCommand: str = ""
     hide: bool = False
     identifier: str = ""
-    ip_address: str = ""
-    modpoll_command: str = ""
+    ipAddress: str = ""
+    modpollCommand: str = ""
 
     @property
     def scaled_value(self) -> Any:
@@ -566,45 +551,46 @@ class RegisterData:
 class HardwareDiagnostics:
     """Detailed hardware diagnostic information."""
     key: str
-    hardware_name: str
-    last_attempt: str
-    last_changed: str
-    last_communication: int
-    last_success: str
-    out_of_service: bool
-    out_of_service_note: str
-    out_of_service_until: Optional[str]
-    parent_key: str
-    read_only: bool
-    time_zone: str
-    unit_id: int
-    register_sets: List[Dict[str, Any]]
-    gateway_type: int = 0
+    hardwareName: str
+    lastAttempt: str
+    lastChanged: str
+    lastCommunication: int
+    lastSuccess: str
+    outOfService: bool
+    outOfServiceNote: str
+    outOfServiceUntil: Optional[str]
+    parentKey: str
+    readOnly: bool
+    timeZone: str
+    unitId: int
+    registerSets: List[Dict[str, Any]]
+    gatewayType: int = 0
     jwt: str = ""
     parity: str = ""
-    stop_bits: str = ""
-    tcp_port: Optional[int] = None
-    baud_rate: str = ""
-    device_path: str = ""
-    ip_address: int = 0
-    is_pmce: bool = False
-    is_tcp: bool = False
-    obvius_network_info: Optional[Any] = None
-    easy_config_link: str = ""
-    easy_config_base_url: str = ""
-    base_url: str = ""
-    control_url: str = ""
-    dashboard_key: str = ""
-    last_success_image_url: str = ""
+    stopBits: str = ""
+    tcpPort: Optional[int] = None
+    baudRate: str = ""
+    devicePath: str = ""
+    ipAddress: int = 0
+    isPMCE: bool = False
+    isTcp: bool = False
+    obviusNetworkInfo: Optional[Any] = None
+    easyConfigLink: str = ""
+    easyConfigBaseUrl: str = ""
+    baseUrl: str = ""
+    controlUrl: str = ""
+    dashboardKey: str = ""
+    lastSuccessImageUrl: str = ""
+    dataBits: str = ""
 
     @property
     def is_online(self) -> bool:
         """Check if hardware is currently online."""
-        if not self.last_communication:
+        if not self.lastCommunication:
             return False
         # Consider online if communication within last hour
         current_time = int(datetime.now().timestamp() * 1000)
-        return (current_time - self.last_communication) < (60 * 60 * 1000)
+        return (current_time - self.lastCommunication) < (60 * 60 * 1000)
 
 
 @dataclass
@@ -612,58 +598,58 @@ class SiteDetailedInfo:
     """Detailed site information from /api/view/site/{site_id}."""
     key: str
     name: str
-    is_monitored: bool
-    cell_modem_contract_end_date: Optional[str]
+    isMonitored: bool
+    cellModemContractEndDate: Optional[str]
     address: Dict[str, str]
-    cell_modem_contract_start_date: Optional[str]
-    energy_capacity_unit: int
+    cellModemContractStartDate: Optional[str]
+    energyCapacityUnit: int
     longitude: float
-    parent_key: str
-    weather_mode: int
-    monitoring_contract_is_manual: bool
-    cell_modem_contract_custom_banner: bool
-    monitoring_contract_warn_date: Optional[str]
-    working_status: str
-    capacity_dc_unit: int
+    parentKey: str
+    weatherMode: int
+    monitoringContractIsManual: bool
+    cellModemContractCustomBanner: bool
+    monitoringContractWarnDate: Optional[str]
+    workingStatus: str
+    capacityDcUnit: int
     elevation: int
-    daily_production_estimate: float
-    last_changed: str
-    monthly_production_estimate: float
-    rated_power_unit: int
-    monitoring_contract_custom_banner: bool
-    monitoring_contract_status: int
-    monitoring_contract_end_date: Optional[str]
-    estimated_commissioning_date: Optional[str]
-    cell_modem_contract_access_note: str
-    cell_modem_contract_terminate_date: Optional[str]
-    cell_modem_contract_is_manual: bool
-    customer_logo: str
-    capacity_ac: int
-    custom_query_key: str
-    preferred_ws_for_estimated_insolation: int
-    requires_pub_ip: bool
-    default_query: int
-    monitoring_contract_will_not_renew: bool
-    capacity_ac_unit: int
+    dailyProductionEstimate: float
+    lastChanged: str
+    monthlyProductionEstimate: float
+    ratedPowerUnit: int
+    monitoringContractCustomBanner: bool
+    monitoringContractStatus: int
+    monitoringContractEndDate: Optional[str]
+    estimatedCommissioningDate: Optional[str]
+    cellModemContractAccessNote: str
+    cellModemContractTerminateDate: Optional[str]
+    cellModemContractIsManual: bool
+    customerLogo: str
+    capacityAc: int
+    customQueryKey: str
+    preferredWsForEstimatedInsolation: int
+    requiresPubIp: bool
+    defaultQuery: int
+    monitoringContractWillNotRenew: bool
+    capacityAcUnit: int
     status: int
     latitude: float
-    rated_power: int
-    advanced_site_configuration: bool
-    monitoring_contract_terminate_date: Optional[str]
-    actual_commissioning_date: Optional[str]
-    estimated_losses: Dict[str, str]
-    cell_modem_contract_warn_date: Optional[str]
-    monitoring_contract_access_note: str
-    valid_data_date: str
-    payment_status: int
-    capacity_dc: float
-    monitoring_contract_start_date: Optional[str]
-    energy_capacity: int
-    overview_chart1: str
-    overview_chart2: str
-    cell_modem_contract_will_not_renew: bool
-    site_type: int
-    site_photos: Optional[Any]
+    ratedPower: int
+    advancedSiteConfiguration: bool
+    monitoringContractTerminateDate: Optional[str]
+    actualCommissioningDate: Optional[str]
+    estimatedLosses: Dict[str, str]
+    cellModemContractWarnDate: Optional[str]
+    monitoringContractAccessNote: str
+    validDataDate: str
+    paymentStatus: int
+    capacityDc: float
+    monitoringContractStartDate: Optional[str]
+    energyCapacity: int
+    overviewChart1: str
+    overviewChart2: str
+    cellModemContractWillNotRenew: bool
+    siteType: int
+    sitePhotos: Optional[Any]
 
     @property
     def full_address(self) -> str:
@@ -682,11 +668,11 @@ class SiteDetailedInfo:
     @property
     def contract_days_remaining(self) -> Optional[int]:
         """Calculate days remaining on monitoring contract."""
-        if not self.monitoring_contract_end_date:
+        if not self.monitoringContractEndDate:
             return None
 
         try:
-            end_date = datetime.fromisoformat(self.monitoring_contract_end_date.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(self.monitoringContractEndDate.replace('Z', '+00:00'))
             remaining = end_date - datetime.now(end_date.tzinfo)
             return max(0, remaining.days)
         except (ValueError, AttributeError):
@@ -702,22 +688,22 @@ class SiteDetailedInfo:
 @dataclass
 class ReportingCapabilities:
     """User reporting permissions and capabilities."""
-    can_edit_auto_report: bool
-    can_add_email_report: bool
-    can_add_summary_report: bool
-    can_add_auto_report: bool
-    can_add_user_report: bool
+    canEditAutoReport: bool
+    canAddEmailReport: bool
+    canAddSummaryReport: bool
+    canAddAutoReport: bool
+    canAddUserReport: bool
     views: List[Dict[str, Any]]
 
     @property
     def has_reporting_access(self) -> bool:
         """Check if user has any reporting capabilities."""
         return any([
-            self.can_edit_auto_report,
-            self.can_add_email_report,
-            self.can_add_summary_report,
-            self.can_add_auto_report,
-            self.can_add_user_report
+            self.canEditAutoReport,
+            self.canAddEmailReport,
+            self.canAddSummaryReport,
+            self.canAddAutoReport,
+            self.canAddUserReport
         ])
 
 
@@ -727,7 +713,7 @@ class ReportingCapabilities:
 class UpdateResult:
     """Result of an update operation with full audit trail for backup/versioning."""
     success: bool
-    original_data: Optional[Dict[str, Any]] = None
-    updated_data: Optional[Dict[str, Any]] = None
-    put_response: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
+    originalData: Optional[Dict[str, Any]] = None
+    updatedData: Optional[Dict[str, Any]] = None
+    putResponse: Optional[Dict[str, Any]] = None
+    errorMessage: Optional[str] = None

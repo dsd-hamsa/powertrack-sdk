@@ -153,6 +153,35 @@ def get_hardware_type_name(function_code: Optional[int]) -> str:
     return hardware_types.get(function_code, f"Type {function_code}")
 
 
+def get_function_codes_help() -> str:
+    """Get formatted help text for available function codes."""
+    codes = {
+        1: "Inverter (PV)",
+        2: "Production Meter (PM)",
+        3: "Type 3",
+        4: "Grid Meter (GM)",
+        5: "Weather Station (WS)",
+        6: "DC Combiner",
+        9: "Kiosk",
+        10: "Gateway (GW)",
+        11: "Cell Modem (CE)",
+        14: "Camera",
+        20: "Extra Meter",
+        21: "DNP3 Server",
+        24: "Tracker",
+        25: "BESS Controller",
+        28: "Data Logger",
+        31: "Data Capture",
+        34: "Relay",
+        37: "BESS Meter",
+    }
+
+    lines = ["Available function codes:"]
+    for code, name in sorted(codes.items()):
+        lines.append(f"  {code}: {name}")
+    return "\n".join(lines)
+
+
 def flatten_dict(data: Dict[str, Any], prefix: str = '', separator: str = '_') -> Dict[str, Any]:
     """
     Flatten nested dictionary.
