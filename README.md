@@ -145,7 +145,7 @@ The SDK supports multiple authentication methods. The easiest way is to use the 
    ```
 
 2. **Browser Fetch Parsing** (recommended):
-    - The SDK includes a placeholder `mostRecentFetch.js` file
+    - The SDK includes a placeholder `mostRecentFetch.js` file (if cloning the repo. If installing from pip, create a new file in your project directory or copy from the package contents)
     - Copy a fetch request from Chrome DevTools (see placeholder for instructions)
     - Replace the content in the SDK's `mostRecentFetch.js` file
     - The SDK will automatically find and parse authentication data
